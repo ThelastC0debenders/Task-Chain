@@ -423,13 +423,52 @@ export default function MemberDashboard() {
                     {isMyTask(task) && task.status === "claimed" && (
                         <div style={{display: 'flex', flexDirection: "column", gap: "10px", width: "100%", alignItems: "flex-end"}}>
                              <div style={{display: 'flex', gap: "8px"}}>
-                                <button onClick={() => alert("Jamboard not integrated yet")} style={styles.toolBtn}>
+                                <button 
+                                    onClick={() => window.open("/whiteshi.html", "_blank")} 
+                                    style={styles.toolBtn}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#00ff88";
+                                        e.currentTarget.style.color = "#00ff88";
+                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#333";
+                                        e.currentTarget.style.color = "#888";
+                                        e.currentTarget.style.background = "#111";
+                                    }}
+                                >
                                     <Monitor size={14} /> Jamboard
                                 </button>
-                                <button onClick={() => alert("Google Meet not integrated yet")} style={styles.toolBtn}>
+                                <button 
+                                    onClick={() => alert("Google Meet not integrated yet")} 
+                                    style={styles.toolBtn}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#00ff88";
+                                        e.currentTarget.style.color = "#00ff88";
+                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#333";
+                                        e.currentTarget.style.color = "#888";
+                                        e.currentTarget.style.background = "#111";
+                                    }}
+                                >
                                     <Video size={14} /> Meet
                                 </button>
-                                <button onClick={() => alert("Kanban not integrated yet")} style={styles.toolBtn}>
+                                <button 
+                                    onClick={() => alert("Kanban not integrated yet")} 
+                                    style={styles.toolBtn}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#00ff88";
+                                        e.currentTarget.style.color = "#00ff88";
+                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#333";
+                                        e.currentTarget.style.color = "#888";
+                                        e.currentTarget.style.background = "#111";
+                                    }}
+                                >
                                     <Trello size={14} /> Kanban
                                 </button>
                                 <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
@@ -551,12 +590,13 @@ const styles: any = {
     padding: "8px 16px",
     borderRadius: "6px",
     fontSize: "12px",
-    fontWeight: "600",
+    fontWeight: "700",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     gap: "6px",
     transition: "all 0.2s",
+    textTransform: "uppercase",
   },
   ctaDone: {
     background: "#111",
