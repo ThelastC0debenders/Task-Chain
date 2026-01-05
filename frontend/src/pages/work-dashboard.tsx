@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
 import Editor from "@monaco-editor/react"
 import axios from "axios"
-import { connectWallet } from "../services/wallet"
+import { checkWalletConnection, connectWallet } from "../services/wallet"
+import { Terminal, Code, GitCommit, RefreshCw, AlertTriangle, File as FileIcon, Save, Wallet } from "lucide-react"
 
 const API = "http://localhost:5000"
 
-interface File {
+interface WorkspaceFile {
   path: string
   permission: "editable" | "readonly" | "hidden"
   language: string
@@ -18,10 +19,10 @@ interface GitLog {
 }
 
 export default function WorkDashboard() {
-  const [taskId, setTaskId] = useState("task-1")
+  const [taskId, setTaskId] = useState("")
   const [claimId, setClaimId] = useState("")
   const [address, setAddress] = useState("")
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles] = useState<WorkspaceFile[]>([])
   const [activeFile, setActiveFile] = useState<string>("")
   const [fileContent, setFileContent] = useState("")
   const [mode, setMode] = useState<"work" | "review" | "commit">("work")
@@ -30,36 +31,79 @@ export default function WorkDashboard() {
   const [commitMessage, setCommitMessage] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [pushing, setPushing] = useState(false)
+
 
   useEffect(() => {
-    connectAndLoad()
+    const params = new URLSearchParams(window.location.search)
+    const tId = params.get("taskId")
+    const cId = params.get("claimId")
+
+    if (tId && cId) {
+      setTaskId(tId)
+      setClaimId(cId)
+      // Try silent connect first
+      // If we don't have an address, we don't prompt yet unless they click connect
+      // But we CAN load files if we have the IDs
+      checkWalletConnection().then(res => {
+        if (res) setAddress(res.address)
+      })
+    } else {
+      // Restore from localStorage
+      const savedTaskId = localStorage.getItem("taskchain_taskId")
+      const savedClaimId = localStorage.getItem("taskchain_claimId")
+      const savedActiveFile = localStorage.getItem("taskchain_activeFile")
+
+      if (savedTaskId && savedClaimId) {
+        setTaskId(savedTaskId)
+        setClaimId(savedClaimId)
+        if (savedActiveFile) setActiveFile(savedActiveFile)
+
+        checkWalletConnection().then(res => {
+          if (res) setAddress(res.address)
+        })
+      }
+    }
   }, [])
 
-  async function connectAndLoad() {
+  useEffect(() => {
+    if (taskId) localStorage.setItem("taskchain_taskId", taskId)
+    if (claimId) localStorage.setItem("taskchain_claimId", claimId)
+    if (activeFile) localStorage.setItem("taskchain_activeFile", activeFile)
+  }, [taskId, claimId, activeFile])
+
+  async function handleManualConnect() {
     try {
       const { address } = await connectWallet()
       setAddress(address)
-      setClaimId(`claim-${Date.now()}-${address.slice(0, 6)}`)
+      if (!claimId) {
+        setClaimId(`claim-${Date.now()}-${address.slice(0, 6)}`)
+      }
     } catch (err: any) {
       setError("❌ " + err.message)
     }
   }
 
+  // Effect to load files when we have IDs and no files loaded (restoration)
+  useEffect(() => {
+    if (taskId && claimId && files.length === 0 && !loading) {
+      // Force initialize to ensure scope is up to date (writable)
+      initializeWorkspace()
+    }
+  }, [taskId, claimId])
+
   async function initializeWorkspace() {
     try {
       setLoading(true)
       setError("")
-      const repoUrl = "https://github.com/saaj376/taskchain.git"
-      
-      const res = await axios.post(`${API}/workspace/create`, {
+      const repoUrl = "https://github.com/ThelastC0debenders/Pathway-Hack.git"
+
+      await axios.post(`${API}/workspace/create`, {
         taskId,
         claimId,
         repoUrl,
         scope: [
-          { path: "src", permission: "editable" },
-          { path: "contracts", permission: "editable" },
-          { path: "README.md", permission: "readonly" },
-          { path: "package.json", permission: "readonly" }
+          { path: ".", permission: "editable" } // [MODIFIED] Full access
         ]
       })
 
@@ -76,8 +120,15 @@ export default function WorkDashboard() {
       const res = await axios.get(`${API}/workspace/${taskId}/${claimId}/files`)
       setFiles(res.data.files)
       if (res.data.files.length > 0) {
-        setActiveFile(res.data.files[0].path)
-        await loadFile(res.data.files[0].path)
+        // If we have an active file from storage, try to use it
+        // Otherwise use the first one
+        if (!activeFile) {
+          setActiveFile(res.data.files[0].path)
+          await loadFile(res.data.files[0].path)
+        } else {
+          // Just reload content of active file
+          await loadFile(activeFile)
+        }
       }
     } catch (err: any) {
       setError("❌ " + (err.response?.data?.error || err.message))
@@ -95,13 +146,13 @@ export default function WorkDashboard() {
   }
 
   async function saveFile() {
-    if (!activeFile) return
+    if (!activeFile || !taskId || !claimId) return
     try {
       await axios.post(`${API}/workspace/${taskId}/${claimId}/file/${activeFile}`, {
-        content: fileContent
+        content: fileContent,
       })
-      setError("✅ File saved!")
-      setTimeout(() => setError(""), 2000)
+      setError("✅ Saved")
+      setTimeout(() => setError(""), 1500)
     } catch (err: any) {
       setError("❌ " + (err.response?.data?.error || err.message))
     }
@@ -115,11 +166,11 @@ export default function WorkDashboard() {
         message: `$ git ${gitCommand}`,
         timestamp: new Date().toLocaleTimeString()
       }])
-      
+
       const res = await axios.post(`${API}/workspace/${taskId}/${claimId}/git`, {
         command: gitCommand
       })
-      
+
       if (res.data.ok) {
         setGitLogs(prev => [...prev, {
           type: "output",
@@ -133,7 +184,7 @@ export default function WorkDashboard() {
           timestamp: new Date().toLocaleTimeString()
         }])
       }
-      
+
       setGitCommand("")
     } catch (err: any) {
       setGitLogs(prev => [...prev, {
@@ -144,196 +195,518 @@ export default function WorkDashboard() {
     }
   }
 
-  async function commitChanges() {
-    if (!commitMessage.trim()) {
-      setError("❌ Enter commit message")
-      return
-    }
-    try {
-      setLoading(true)
-      const res = await axios.post(`${API}/workspace/${taskId}/${claimId}/commit`, {
+ async function commitChanges() {
+  if (!address) {
+    setError("❌ Connect wallet to commit")
+    return
+  }
+  if (!commitMessage.trim()) {
+    setError("❌ Enter commit message")
+    return
+  }
+
+  try {
+    // ===== COMMIT PHASE =====
+    setLoading(true)
+
+    const res = await axios.post(
+      `${API}/workspace/${taskId}/${claimId}/commit`,
+      {
         message: commitMessage,
         author: address
-      })
-      
-      if (res.data.ok) {
-        setError("✅ Changes committed!")
-        setCommitMessage("")
-        setMode("commit")
-        setTimeout(() => setError(""), 3000)
       }
-    } catch (err: any) {
-      setError("❌ " + (err.response?.data?.error || err.message))
-    } finally {
-      setLoading(false)
+    )
+
+    if (!res.data.ok) throw new Error("Commit failed")
+
+    setError("✅ Changes committed!")
+    setCommitMessage("")
+    setMode("commit")
+
+    // 🔑 END commit phase
+    setLoading(false)
+
+    // ===== PUSH PHASE =====
+    setPushing(true)
+    setError("🚀 Pushing changes...")
+
+    const pushRes = await axios.post(
+      `${API}/workspace/${taskId}/${claimId}/push`
+    )
+
+    if (!pushRes.data.ok) {
+      setError("⚠️ Commit done, push failed")
+    } else {
+      setError("🚀 Changes committed & pushed!")
     }
+
+    setTimeout(() => setError(""), 3000)
+  } catch (err: any) {
+    setError("❌ " + (err.response?.data?.error || err.message))
+    setLoading(false)
+  } finally {
+    setPushing(false)
   }
+}
+
 
   const currentFile = files.find(f => f.path === activeFile)
   const isReadOnly = currentFile?.permission === "readonly"
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", padding: "20px" }}>
-      <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
-        {/* Header */}
-        <div style={{ background: "white", padding: "20px", borderRadius: "10px", marginBottom: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
-          <h1>💻 Workspace</h1>
-          <p>Task: <strong>{taskId}</strong> | Claim: <strong>{claimId.slice(0, 20)}...</strong></p>
-          <p>Wallet: <strong>{address ? address.slice(0, 10) + "..." : "Not connected"}</strong></p>
-          {!files.length && (
-            <button 
-              onClick={initializeWorkspace}
-              disabled={loading}
-              style={{
-                padding: "10px 20px",
-                background: "#667eea",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-                marginTop: "10px"
-              }}
-            >
-              {loading ? "Initializing..." : "Initialize Workspace"}
+    <div style={styles.container}>
+      <header style={styles.header}>
+        <div style={styles.headerLeft}>
+          <div style={styles.activityButton}><Code size={20} color="#00ff88" /></div>
+          <div>
+            <h1 style={styles.title}>IDE :: {taskId}</h1>
+            <div style={styles.breadcrumb}>
+              <span style={styles.claimId}>CLAIM: {claimId}</span>
+              {address ? (
+                <span style={styles.walletAddr}> | WALLET: {address.slice(0, 6)}...{address.slice(-4)}</span>
+              ) : (
+                <button onClick={handleManualConnect} style={styles.connectLink}>
+                  <Wallet size={10} /> CONNECT WALLET
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        <div style={styles.headerRight}>
+          {files.length > 0 && (
+            <button onClick={saveFile} style={styles.ctaPrimary}>
+              <Save size={14} /> SAVE
             </button>
           )}
-          {error && <p style={{ marginTop: "10px", color: error.includes("✅") ? "green" : "red" }}>{error}</p>}
-        </div>
 
-        {files.length > 0 && (
-          <>
-            {/* Mode Switcher */}
-            <div style={{ background: "white", padding: "10px", borderRadius: "10px", marginBottom: "20px", display: "flex", gap: "10px" }}>
+          {!files.length ? (
+            <button
+              onClick={initializeWorkspace}
+              disabled={loading}
+              style={styles.ctaPrimary}
+            >
+              <RefreshCw size={14} className={loading ? "spin" : ""} /> {loading ? "INITIALIZING..." : "INITIALIZE ENV"}
+            </button>
+          ) : (
+            <div style={styles.modeSwitcher}>
               {(["work", "review", "commit"] as const).map(m => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
                   style={{
-                    padding: "8px 16px",
-                    background: mode === m ? "#667eea" : "#e0e0e0",
-                    color: mode === m ? "white" : "black",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                    textTransform: "capitalize"
+                    ...styles.modeBtn,
+                    ...(mode === m ? styles.modeBtnActive : {})
                   }}
                 >
-                  {m === "work" && "✏️"} {m === "review" && "👁️"} {m === "commit" && "✓"} {m}
+                  {m.toUpperCase()}
                 </button>
               ))}
             </div>
+          )}
+        </div>
+      </header>
 
-            {/* Main Editor */}
-            <div style={{ display: "grid", gridTemplateColumns: "250px 1fr 300px", gap: "20px", marginBottom: "20px" }}>
-              {/* File Explorer */}
-              <div style={{ background: "white", borderRadius: "10px", padding: "15px", boxShadow: "0 4px 6px rgba(0,0,0,0.1)", maxHeight: "600px", overflowY: "auto" }}>
-                <h3>📁 Files</h3>
-                {files.map(file => (
-                  <div
-                    key={file.path}
-                    onClick={() => loadFile(file.path)}
-                    style={{
-                      padding: "8px",
-                      margin: "5px 0",
-                      background: activeFile === file.path ? "#667eea" : "#f5f5f5",
-                      color: activeFile === file.path ? "white" : "black",
-                      borderRadius: "5px",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                      wordBreak: "break-word",
-                      opacity: file.permission === "readonly" ? 0.7 : 1
-                    }}
-                  >
-                    {file.permission === "readonly" && "🔒 "}{file.path}
-                  </div>
-                ))}
-              </div>
+      {error && (
+        <div style={styles.errorBanner}>
+          <AlertTriangle size={16} /> {error}
+        </div>
+      )}
 
-              {/* Editor */}
-              <div style={{ background: "white", borderRadius: "10px", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
-                <div style={{ padding: "10px", background: "#f5f5f5", borderBottom: "1px solid #ddd", display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontWeight: "bold" }}>{activeFile || "No file selected"}</span>
-                  {!isReadOnly && mode === "work" && (
-                    <button onClick={saveFile} style={{ padding: "5px 10px", background: "#667eea", color: "white", border: "none", borderRadius: "3px", cursor: "pointer" }}>
-                      �� Save
-                    </button>
-                  )}
-                </div>
-                <Editor
-                  height="600px"
-                  language={currentFile?.language || "plaintext"}
-                  value={fileContent}
-                  onChange={(val) => !isReadOnly && setFileContent(val || "")}
-                  options={{
-                    readOnly: isReadOnly || mode !== "work",
-                    minimap: { enabled: false },
-                    fontSize: 13,
-                    fontFamily: "Fira Code, monospace"
-                  }}
-                  theme="vs-light"
-                />
-              </div>
-
-              {/* Git Terminal */}
-              <div style={{ background: "white", borderRadius: "10px", padding: "15px", boxShadow: "0 4px 6px rgba(0,0,0,0.1)", display: "flex", flexDirection: "column" }}>
-                <h3>🔌 Git Terminal</h3>
-                <div style={{ background: "#1e1e1e", color: "#00ff00", padding: "10px", borderRadius: "5px", height: "350px", overflowY: "auto", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px" }}>
-                  {gitLogs.map((log, i) => (
-                    <div key={i} style={{ color: log.type === "error" ? "#ff6b6b" : log.type === "command" ? "#4ecdc4" : "#00ff00", marginBottom: "5px" }}>
-                      [{log.timestamp}] {log.message}
-                    </div>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  value={gitCommand}
-                  onChange={(e) => setGitCommand(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && runGitCommand()}
-                  placeholder="git status, git add ., git log..."
-                  style={{ padding: "8px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ddd", fontFamily: "monospace", fontSize: "12px" }}
-                />
-                <button onClick={runGitCommand} style={{ padding: "8px", background: "#667eea", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}>
-                  Execute
-                </button>
-              </div>
-            </div>
-
-            {/* Commit Panel */}
-            {mode === "review" && (
-              <div style={{ background: "white", padding: "20px", borderRadius: "10px", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
-                <h3>📝 Review Changes</h3>
-                <p>Review your changes before committing...</p>
-              </div>
-            )}
-
-            {mode === "commit" && (
-              <div style={{ background: "white", padding: "20px", borderRadius: "10px", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
-                <h3>✓ Commit Work</h3>
-                <textarea
-                  value={commitMessage}
-                  onChange={(e) => setCommitMessage(e.target.value)}
-                  placeholder="Enter commit message..."
-                  style={{ width: "100%", height: "80px", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ddd", fontFamily: "monospace" }}
-                />
-                <button
-                  onClick={commitChanges}
-                  disabled={loading}
+      {files.length > 0 && (
+        <div style={styles.workspaceShell}>
+          {/* Sidebar */}
+          <div style={styles.sidebar}>
+            <div style={styles.sidebarHeader}>EXPLORER</div>
+            <div style={styles.fileList}>
+              {files.map(file => (
+                <div
+                  key={file.path}
+                  onClick={() => loadFile(file.path)}
                   style={{
-                    padding: "10px 20px",
-                    background: loading ? "#ccc" : "#4caf50",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: loading ? "default" : "pointer"
+                    ...styles.fileItem,
+                    ...(activeFile === file.path ? styles.fileItemActive : {})
                   }}
                 >
-                  {loading ? "Committing..." : "💾 Commit Changes"}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+                  {file.permission === "readonly" ? <AlertTriangle size={12} color="#f9d423" /> : <FileIcon size={14} color="#666" />}
+                  <span style={styles.fileName}>{file.path}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Main Editor Area */}
+          <div style={styles.editorArea}>
+            {/* Bare Editor Component */}
+            <div style={{ flex: 1, border: "1px solid #333", overflow: "hidden" }}>
+              <Editor
+                height="100%"
+                language={currentFile?.language || "javascript"}
+                value={fileContent}
+                onChange={(val) => !isReadOnly && setFileContent(val || "")}
+                options={{
+                  readOnly: isReadOnly || mode !== "work",
+                  minimap: { enabled: true },
+                  fontSize: 14,
+                  fontFamily: "monospace",
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                }}
+                theme="vs-dark"
+              />
+            </div>
+
+            {/* Terminal / Commit Panel */}
+            <div style={styles.bottomPanel}>
+              {mode === "commit" ? (
+                <div style={styles.commitPanel}>
+                  <div style={styles.panelTitle}><GitCommit size={16} /> COMMIT CHANGES</div>
+                  <div style={styles.commitForm}>
+                    <textarea
+                      value={commitMessage}
+                      onChange={(e) => setCommitMessage(e.target.value)}
+                      placeholder="feat: implement new authentication flow..."
+                      style={styles.commitInput}
+                    />
+                    <button
+                      onClick={commitChanges}
+                      disabled={loading || pushing}
+                      style={styles.commitBtn}
+                    >
+                      {loading
+                        ? "COMMITTING..."
+                        : pushing
+                        ? "PUSHING..."
+                        : "COMMIT"}
+                    </button>
+
+                  </div>
+                </div>
+              ) : (
+                <div style={styles.terminalPanel}>
+                  <div style={styles.panelTitle}><Terminal size={14} /> TERMINAL</div>
+                  <div style={styles.terminalOutput}>
+                    {gitLogs.map((log, i) => (
+                      <div key={i} style={{
+                        ...styles.logLine,
+                        color: log.type === "error" ? "#ff4e50" : log.type === "command" ? "#00d9f5" : "#00ff88"
+                      }}>
+                        <span style={styles.timestamp}>[{log.timestamp}]</span> {log.message}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={styles.terminalInputRow}>
+                    <span style={styles.prompt}>$</span>
+                    <input
+                      type="text"
+                      value={gitCommand}
+                      onChange={(e) => setGitCommand(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && runGitCommand()}
+                      placeholder="git command..."
+                      style={styles.terminalInput}
+                    />
+                    <button onClick={runGitCommand} style={styles.runDist}>RUN</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+const styles: any = {
+  container: {
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    background: "#0d1117",
+    color: "#c9d1d9",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+    overflow: "hidden",
+  },
+  header: {
+    height: "50px",
+    background: "#161b22",
+    borderBottom: "1px solid #30363d",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 16px",
+  },
+  headerLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+  },
+  activityButton: {
+    padding: "8px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    background: "rgba(0, 255, 136, 0.1)",
+  },
+  title: {
+    fontSize: "14px",
+    fontWeight: "bold",
+    margin: 0,
+    color: "#fff",
+    letterSpacing: "0.5px",
+  },
+  breadcrumb: {
+    fontSize: "11px",
+    color: "#8b949e",
+    display: "flex",
+    gap: "8px",
+    fontFamily: "monospace",
+  },
+  claimId: {
+    maxWidth: "200px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  walletAddr: {
+    fontFamily: "monospace",
+    color: "#00ff88",
+  },
+  headerRight: {
+    display: "flex",
+    gap: "12px",
+  },
+  ctaPrimary: {
+    background: "#238636",
+    color: "#fff",
+    border: "1px solid rgba(240, 246, 252, 0.1)",
+    borderRadius: "6px",
+    padding: "6px 14px",
+    fontSize: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  },
+  modeSwitcher: {
+    display: "flex",
+    background: "#0d1117",
+    border: "1px solid #30363d",
+    borderRadius: "6px",
+    padding: "2px",
+  },
+  modeBtn: {
+    background: "transparent",
+    border: "none",
+    color: "#8b949e",
+    padding: "4px 12px",
+    fontSize: "11px",
+    fontWeight: "600",
+    cursor: "pointer",
+    borderRadius: "4px",
+  },
+  modeBtnActive: {
+    background: "#1f6feb",
+    color: "#fff",
+  },
+  errorBanner: {
+    background: "#2a0e0e",
+    color: "#ffa198",
+    padding: "8px 16px",
+    fontSize: "12px",
+    borderBottom: "1px solid #4c1d1d",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  workspaceShell: {
+    flex: 1,
+    display: "flex",
+    overflow: "hidden",
+  },
+  sidebar: {
+    width: "250px",
+    background: "#0d1117",
+    borderRight: "1px solid #30363d",
+    display: "flex",
+    flexDirection: "column",
+  },
+  sidebarHeader: {
+    padding: "10px 16px",
+    fontSize: "11px",
+    fontWeight: "bold",
+    color: "#8b949e",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+  },
+  fileList: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "0 8px",
+  },
+  fileItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "6px 8px",
+    borderRadius: "4px",
+    cursor: "pointer",
+    color: "#8b949e",
+    marginBottom: "2px",
+  },
+  fileItemActive: {
+    background: "#161b22",
+    color: "#fff",
+  },
+  fileName: {
+    fontSize: "13px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  editorArea: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    background: "#0d1117",
+  },
+  editorHeader: {
+    height: "36px",
+    background: "#0d1117",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottom: "1px solid #30363d",
+  },
+  tabActive: {
+    height: "100%",
+    background: "#1e1e1e",
+    borderTop: "1px solid #f9826c",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "0 16px",
+    fontSize: "12px",
+  },
+  editorActions: {
+    paddingRight: "10px",
+  },
+  actionBtn: {
+    background: "transparent",
+    border: "1px solid #30363d",
+    color: "#c9d1d9",
+    padding: "4px 8px",
+    fontSize: "11px",
+    borderRadius: "4px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  },
+  editorWrapper: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  bottomPanel: {
+    height: "250px",
+    background: "#0d1117",
+    borderTop: "1px solid #30363d",
+    display: "flex",
+    flexDirection: "column",
+  },
+  terminalPanel: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    padding: "10px",
+    overflow: "hidden",
+  },
+  commitPanel: {
+    flex: 1,
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  },
+  panelTitle: {
+    fontSize: "11px",
+    fontWeight: "bold",
+    color: "#8b949e",
+    marginBottom: "10px",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  },
+  terminalOutput: {
+    flex: 1,
+    fontFamily: "monospace",
+    fontSize: "12px",
+    overflowY: "auto",
+    marginBottom: "10px",
+  },
+  logLine: {
+    marginBottom: "4px",
+    lineHeight: "1.4",
+  },
+  timestamp: {
+    color: "#484f58",
+  },
+  terminalInputRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    background: "#161b22",
+    padding: "6px",
+    borderRadius: "4px",
+    border: "1px solid #30363d",
+  },
+  prompt: {
+    color: "#00ff88",
+    fontWeight: "bold",
+  },
+  terminalInput: {
+    flex: 1,
+    background: "transparent",
+    border: "none",
+    color: "#fff",
+    fontFamily: "monospace",
+    fontSize: "12px",
+    outline: "none",
+  },
+  runDist: {
+    background: "#238636",
+    border: "none",
+    color: "#fff",
+    padding: "2px 8px",
+    borderRadius: "3px",
+    fontSize: "10px",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+  commitForm: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "start",
+  },
+  commitInput: {
+    flex: 1,
+    height: "100px",
+    background: "#161b22",
+    border: "1px solid #30363d",
+    borderRadius: "6px",
+    color: "#fff",
+    padding: "10px",
+    fontFamily: "monospace",
+    fontSize: "13px",
+  },
+  commitBtn: {
+    background: "#238636",
+    color: "#fff",
+    border: "none",
+    padding: "10px 20px",
+    borderRadius: "6px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    height: "fit-content",
+  },
 }
