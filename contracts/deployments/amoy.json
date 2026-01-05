@@ -1,0 +1,10 @@
+{
+  "network": "Polygon Amoy Testnet",
+  "chainId": 80002,
+  "rpcUrl": "https://rpc-amoy.polygon.technology",
+  "contractName": "taskchain",
+  "contractAddress": "0xdC1a3Fb30343e26C88f3F8baCCaA5a7fc93D4196",
+  "deployer": "0x0D0E80dB4dF190c06A644480AbA6c8F788fd7937",
+  "deployedAt": "2025-12-31T14:11:39Z",
+  "explorerUrl": "https://amoy.polygonscan.com/address/0xdC1a3Fb30343e26C88f3F8baCCaA5a7fc93D4196"
+}
