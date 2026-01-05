@@ -13,7 +13,7 @@ import {
   Plus
 } from "lucide-react"
 
-const API = "http://localhost:5000"
+
 
 interface Task {
   id: string
@@ -27,11 +27,11 @@ interface Task {
 }
 
 export default function LeaderCreateTask() {
-  const [teamId, setTeamId] = useState("team-123")
+  const teamId = "team-123"
   const [address, setAddress] = useState("")
   const [tasks, setTasks] = useState<Task[]>([])
   const [formOpen, setFormOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+
 
   const [form, setForm] = useState({
     title: "",

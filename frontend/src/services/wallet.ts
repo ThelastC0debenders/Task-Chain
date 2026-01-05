@@ -52,3 +52,21 @@ export async function connectWallet() {
 
   return { provider, signer, address }
 }
+
+export async function checkWalletConnection() {
+  const ethereum = (window as any).ethereum
+  if (!ethereum) return null
+
+  try {
+    // Check if we have permissions already
+    const accounts = await ethereum.request({ method: "eth_accounts" })
+    if (accounts.length > 0) {
+      // We have access, so we can "connect" without prompting
+      // effectively the same as connectWallet but we verify the network
+      return connectWallet()
+    }
+  } catch (err) {
+    console.error("Silent connect failed", err)
+  }
+  return null
+}
