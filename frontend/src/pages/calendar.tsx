@@ -13,7 +13,7 @@ const CalendarLayout = () => {
     const loadEvents = async () => {
         try {
             const list = await calendarService.getEvents()
-            setEvents(list)
+            setEvents(list || [])
         } catch (e) { console.error(e) }
     }
 
@@ -65,7 +65,7 @@ const CalendarLayout = () => {
                     >
                         <div style={{ marginBottom: '5px', opacity: 0.7 }}>{format(day, 'd')}</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            {events.filter(e => isSameDay(new Date(e.start), day)).map(e => (
+                            {(events || []).filter(e => isSameDay(new Date(e.start), day)).map(e => (
                                 <div key={e.id} style={{ backgroundColor: '#007bff', fontSize: '0.7em', padding: '2px 4px', borderRadius: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {e.title}
                                 </div>
