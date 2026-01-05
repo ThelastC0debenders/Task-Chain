@@ -1,5 +1,7 @@
 import { Router } from "express"
-import { createInvite, acceptInvite, listMembers } from "../services/invite"
+import { createInvite, acceptInvite, listMembers , isMember} from "../services/invite"
+import { publishCallState } from "../services/firebase"
+import { createMeet } from "../services/meet"
 
 const router = Router()
 
@@ -33,6 +35,42 @@ router.get("/members/:teamId", (req, res) => {
     res.json({ teamId: req.params.teamId, members })
   } catch (err: any) {
     res.status(400).json({ error: err.message })
+  }
+})
+
+router.post("/request-meet", async (req, res) => {
+  try {
+    const { teamId, wallet } = req.body
+    if (!teamId || !wallet) {
+      return res
+        .status(400)
+        .json({ error: "teamId and wallet are required" })
+    }
+
+    // 1️⃣ Authorization
+    if (!isMember(teamId, wallet)) {
+      return res.status(403).json({ error: "Not a team member" })
+    }
+
+    // 2️⃣ Create meet
+    const meetLink = await createMeet(teamId)
+
+    // 3️⃣ Publish shared state (Firestore)
+    await publishCallState(teamId, {
+      status: "requested",
+      requestedBy: wallet.toLowerCase(),
+      meetLink,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 15 * 60 * 1000,
+    })
+
+    // 4️⃣ Respond
+    res.json({
+      ok: true,
+      meetLink,
+    })
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
   }
 })
 

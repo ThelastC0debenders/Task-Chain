@@ -52,3 +52,10 @@ export function acceptInvite(token: string, wallet: string) {
 export function listMembers(teamId: string) {
   return Array.from(members.get(teamId) || [])
 }
+
+
+export function isMember(teamId: string, wallet: string) {
+  const set = members.get(teamId)
+  if (!set) return false
+  return set.has(wallet.toLowerCase())
+}

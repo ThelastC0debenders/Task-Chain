@@ -4,6 +4,10 @@ import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { claimTaskOnChain, completeTaskOnChain } from "../services/contract"
 import confetti from "canvas-confetti"
 import { Monitor, Video, Code, MessageCircle, Trello, Calendar, FileText, Palette } from "lucide-react"
+import { doc, onSnapshot } from "firebase/firestore"
+import { db } from "../services/firebase"
+
+
 const API = "http://localhost:5001"
 interface Task {
   id: string
@@ -30,6 +34,32 @@ export default function MemberDashboard() {
   const [filter, setFilter] = useState("all")
   const [tasks, setTasks] = useState<Task[]>([])
   const [claimedTasks, setClaimedTasks] = useState<string[]>([])
+  const [callState, setCallState] = useState<any>(null)
+  const [dismissedCallId, setDismissedCallId] = useState<string | null>(null)
+
+
+  // listen to firestore pushes
+  useEffect(() => {
+    if (!teamId) return
+  
+    const ref = doc(db, "teams", teamId, "meta", "call")
+  
+    const unsubscribe = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data()
+        setCallState(data)
+  
+        // Reset dismissal if this is a NEW call
+        if (data.createdAt !== dismissedCallId) {
+          setDismissedCallId(null)
+        }
+      }
+    })
+  
+    return () => unsubscribe()
+  }, [teamId, dismissedCallId])
+  
+  
 
   // Removed Workspace/Git/Audit State
 
@@ -55,6 +85,31 @@ export default function MemberDashboard() {
       }
     })
   }, [])
+
+  async function handleRequestMeet() {
+    if (!address) {
+      alert("Please connect your wallet first")
+      return
+    }
+  
+    if (!teamId) {
+      alert("Team ID missing")
+      return
+    }
+  
+    try {
+      await axios.post(`${API}/team/request-meet`, {
+        teamId,
+        wallet: address,
+      })
+    } catch (err: any) {
+      alert(
+        "Failed to request meet: " +
+          (err.response?.data?.error || err.message)
+      )
+    }
+  }
+  
 
   async function connectAndVerify() {
     const { address } = await connectWallet()
@@ -206,6 +261,68 @@ export default function MemberDashboard() {
   return (
     <div style={styles.container}>
       {/* Header */}
+      {address &&
+        teamId &&
+        callState?.status === "requested" &&
+        callState.createdAt !== dismissedCallId && (
+
+          <div
+            style={{
+              position: "fixed",
+              bottom: 20,
+              right: 20,
+              background: "#0a0a0a",
+              border: "1px solid #00ff88",
+              color: "#00ff88",
+              padding: "16px 18px",
+              borderRadius: "10px",
+              zIndex: 9999,
+              width: "320px",
+              boxShadow: "0 0 20px rgba(0,255,136,0.25)",
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <strong>📞 Team Meet Requested</strong>
+              <button
+                onClick={() => setDismissedCallId(callState.createdAt)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#888",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ fontSize: 12, color: "#aaa", margin: "8px 0 12px" }}>
+              Requested by {callState.requestedBy?.slice(0, 6)}…
+            </div>
+
+            <a
+              href={callState.meetLink}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "inline-block",
+                background: "#00ff88",
+                color: "#000",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                textDecoration: "none",
+              }}
+            >
+              JOIN MEET
+            </a>
+          </div>
+      )}
+
       <div style={styles.header}>
         <div>
           <div style={styles.eyebrow}>HYPER NEON • ON-CHAIN DELIVERY</div>
@@ -438,7 +555,7 @@ export default function MemberDashboard() {
                                     <Monitor size={14} /> Jamboard
                                 </button>
                                 <button 
-                                    onClick={() => alert("Google Meet not integrated yet")} 
+                                    onClick={handleRequestMeet} 
                                     style={styles.toolBtn}
                                     onMouseEnter={(e) => {
                                         e.currentTarget.style.borderColor = "#00ff88";

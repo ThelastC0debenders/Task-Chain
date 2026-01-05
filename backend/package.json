@@ -19,6 +19,7 @@
     "dotenv": "^17.2.3",
     "ethers": "^6.16.0",
     "express": "^5.2.1",
+    "firebase-admin": "^13.6.0",
     "pdfkit": "^0.17.2",
     "socket.io": "^4.8.3"
   },
