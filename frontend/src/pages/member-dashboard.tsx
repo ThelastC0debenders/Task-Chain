@@ -3,11 +3,8 @@ import axios from "axios"
 import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { claimTaskOnChain, completeTaskOnChain } from "../services/contract"
 import confetti from "canvas-confetti"
-import { Monitor, Video, Trello, Code } from "lucide-react"
-import { ClickUpIntegration } from "../components/ClickUpIntegration"
-import { SyncToClickUp } from "../components/SyncToClickUp"
+import { Monitor, Video, Code } from "lucide-react"
 const API = "http://localhost:5001"
-
 interface Task {
   id: string
   title: string
@@ -33,7 +30,6 @@ export default function MemberDashboard() {
   const [filter, setFilter] = useState("all")
   const [tasks, setTasks] = useState<Task[]>([])
   const [claimedTasks, setClaimedTasks] = useState<string[]>([])
-  const [clickUpListId, setClickUpListId] = useState<string>("")
 
   // Removed Workspace/Git/Audit State
 
@@ -377,9 +373,6 @@ export default function MemberDashboard() {
 
           <div style={styles.tasksGrid}>
 
-          {/* ClickUp Integration */}
-          <ClickUpIntegration onListSelected={setClickUpListId} />
-
             {filteredTasks.length === 0 ? (
               <div style={styles.emptyState}>
                 <p style={styles.emptyTitle}>NOTHING HERE YET.</p>
@@ -459,24 +452,7 @@ export default function MemberDashboard() {
                                     }}
                                 >
                                     <Video size={14} /> Meet
-                                </button>
-                                <button 
-                                    onClick={() => alert("Kanban not integrated yet")} 
-                                    style={styles.toolBtn}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#00ff88";
-                                        e.currentTarget.style.color = "#00ff88";
-                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#333";
-                                        e.currentTarget.style.color = "#888";
-                                        e.currentTarget.style.background = "#111";
-                                    }}
-                                >
-                                    <Trello size={14} /> Kanban
-                                </button>
-                                <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
+                                </button>                                <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
                                     <Code size={14} /> Open Workspace
                                 </button>
                              </div>
@@ -487,8 +463,6 @@ export default function MemberDashboard() {
                     )}
                     {task.status === "completed" && <button style={styles.ctaDone}>Completed</button>}
 
-                    {/* ClickUp Sync Button */}
-                    <SyncToClickUp task={task} listId={clickUpListId} />
                   </div>
                 </div>
               ))
@@ -939,6 +913,22 @@ const styles: any = {
   statCard: { marginRight: "40px" },
   statBig: { fontSize: "24px", fontWeight: "bold", color: "#fff" },
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
