@@ -225,16 +225,17 @@ const KanbanBoard = () => {
                                         background: '#00ff88',
                                         border: 'none',
                                         borderRadius: '50%',
-                                        width: '24px',
-                                        height: '24px',
+                                        width: '28px',
+                                        height: '28px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: 'pointer',
-                                        color: '#000'
+                                        color: '#000',
+                                        flexShrink: 0 // Prevent shrinking
                                     }}
                                 >
-                                    <Send size={12} strokeWidth={3} color="#000" />
+                                    <Send size={16} strokeWidth={2.5} color="#000000" style={{ transform: 'translateX(-1px) translateY(1px)' }} />
                                 </button>
                             </div>
                         </div>

@@ -22,7 +22,7 @@ import {
   Calendar,
   Video,
   FileText,
-  PenTool
+  Monitor
 } from "lucide-react"
 
 const API = "/api"
@@ -546,7 +546,7 @@ export default function LeaderDashboard() {
               { title: "Calendar", icon: <Calendar size={32} color="#ff0088" />, desc: "Schedule and events", link: "/calendar" },
               { title: "Video Meet", icon: <Video size={32} color="#ff9900" />, desc: "Secure video conferencing", link: "/meet" },
               { title: "Team Wiki", icon: <FileText size={32} color="#aa00ff" />, desc: "Collaborative documentation", link: "/docs" },
-              { title: "Whiteboard", icon: <PenTool size={32} color="#ffff00" />, desc: "Visual brainstorming canvas", link: "/whiteboard" },
+              { title: "Jamboard", icon: <Monitor size={32} color="#ffff00" />, desc: "Visual brainstorming canvas", link: "/whiteshi.html" },
             ].map((app, i) => (
               <div
                 key={i}

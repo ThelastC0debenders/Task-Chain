@@ -3,7 +3,7 @@ import axios from "axios"
 import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { claimTaskOnChain, completeTaskOnChain } from "../services/contract"
 import confetti from "canvas-confetti"
-import { Monitor, Video, Code, MessageCircle, Trello, Calendar, FileText, Palette } from "lucide-react"
+import { Monitor, Video, Code, MessageCircle, Trello, Calendar, FileText } from "lucide-react"
 import { doc, onSnapshot } from "firebase/firestore"
 import { db } from "../services/firebase"
 
@@ -29,7 +29,7 @@ export default function MemberDashboard() {
   const [token, setToken] = useState<string>("")
   const [inviteStatus, setInviteStatus] = useState("")
   const [joinedTeam, setJoinedTeam] = useState("")
-  const [activeTab, setActiveTab] = useState<"join" | "tasks">("join")
+  const [activeTab, setActiveTab] = useState<"join" | "tasks" | "apps">("join")
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState("all")
   const [tasks, setTasks] = useState<Task[]>([])
@@ -399,6 +399,12 @@ export default function MemberDashboard() {
         >
           Tasks
         </button>
+        <button
+          onClick={() => setActiveTab("apps")}
+          style={{ ...styles.tabBtn, ...(activeTab === "apps" ? styles.tabActive : {}) }}
+        >
+          Apps
+        </button>
       </div>
 
       {/* JOIN TAB */}
@@ -526,141 +532,35 @@ export default function MemberDashboard() {
                   </div>
 
                   <div style={styles.actionsRow}>
-                    {!isMyTask(task) && task.status === "open" && (
-                      <button
-                        onClick={() => handleClaimTask(task.id)}
-                        disabled={!address}
-                        style={{ ...styles.ctaPrimary, opacity: !address ? 0.6 : 1, width: 'auto', padding: '8px 20px' }}
-                      >
-                        Claim
-                      </button>
-                    )}
+                    {/* Actions Row */}
+                    <div style={{ display: 'flex', flexDirection: "column", gap: "10px", width: "100%", alignItems: "flex-end", marginTop: 15 }}>
 
-                    {isMyTask(task) && task.status === "claimed" && (
-                      <div style={{ display: 'flex', flexDirection: "column", gap: "10px", width: "100%", alignItems: "flex-end" }}>
-                        <div style={{ display: 'flex', gap: "8px" }}>
+                      {/* Primary Actions */}
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        {!isMyTask(task) && task.status === "open" && (
                           <button
-                            onClick={() => window.open("/whiteshi.html", "_blank")}
-                            style={styles.toolBtn}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#00ff88";
-                              e.currentTarget.style.color = "#00ff88";
-                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#333";
-                              e.currentTarget.style.color = "#888";
-                              e.currentTarget.style.background = "#111";
-                            }}
+                            onClick={() => handleClaimTask(task.id)}
+                            disabled={!address}
+                            style={{ ...styles.ctaPrimary, opacity: !address ? 0.6 : 1, width: 'auto', padding: '8px 20px' }}
                           >
-                            <Monitor size={14} /> Jamboard
+                            Claim
                           </button>
-                          <button
-                            onClick={handleRequestMeet}
-                            style={styles.toolBtn}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#00ff88";
-                              e.currentTarget.style.color = "#00ff88";
-                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#333";
-                              e.currentTarget.style.color = "#888";
-                              e.currentTarget.style.background = "#111";
-                            }}
-                          >
-                            <Video size={14} /> Meet
-                          </button>
-                          <button
-                            onClick={() => window.open("/chat", "_blank")}
-                            style={styles.toolBtn}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#00ff88";
-                              e.currentTarget.style.color = "#00ff88";
-                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#333";
-                              e.currentTarget.style.color = "#888";
-                              e.currentTarget.style.background = "#111";
-                            }}
-                          >
-                            <MessageCircle size={14} /> Chat
-                          </button>
-                          <button
-                            onClick={() => window.open("/board", "_blank")}
-                            style={styles.toolBtn}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#00ff88";
-                              e.currentTarget.style.color = "#00ff88";
-                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#333";
-                              e.currentTarget.style.color = "#888";
-                              e.currentTarget.style.background = "#111";
-                            }}
-                          >
-                            <Trello size={14} /> Kanban
-                          </button>
-                          <button
-                            onClick={() => window.open("/calendar", "_blank")}
-                            style={styles.toolBtn}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#00ff88";
-                              e.currentTarget.style.color = "#00ff88";
-                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#333";
-                              e.currentTarget.style.color = "#888";
-                              e.currentTarget.style.background = "#111";
-                            }}
-                          >
-                            <Calendar size={14} /> Calendar
-                          </button>
-                          <button
-                            onClick={() => window.open("/docs", "_blank")}
-                            style={styles.toolBtn}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#00ff88";
-                              e.currentTarget.style.color = "#00ff88";
-                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#333";
-                              e.currentTarget.style.color = "#888";
-                              e.currentTarget.style.background = "#111";
-                            }}
-                          >
-                            <FileText size={14} /> Docs
-                          </button>
-                          <button
-                            onClick={() => window.open("/whiteboard", "_blank")}
-                            style={styles.toolBtn}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#00ff88";
-                              e.currentTarget.style.color = "#00ff88";
-                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#333";
-                              e.currentTarget.style.color = "#888";
-                              e.currentTarget.style.background = "#111";
-                            }}
-                          >
-                            <Palette size={14} /> Whiteboard
-                          </button>
-                          <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
-                            <Code size={14} /> Open Workspace
-                          </button>
-                        </div>
-                        <button onClick={() => handleCompleteTask(task.id)} style={{ ...styles.ctaPrimary, background: "#1f6feb", color: "#fff" }}>
-                          Complete Task (Submit)
-                        </button>
+                        )}
+
+                        {isMyTask(task) && task.status === "claimed" && (
+                          <>
+                            <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
+                              <Code size={14} /> Open Workspace
+                            </button>
+                            <button onClick={() => handleCompleteTask(task.id)} style={{ ...styles.ctaPrimary, background: "#1f6feb", color: "#fff" }}>
+                              Complete Task (Submit)
+                            </button>
+                          </>
+                        )}
+
+                        {task.status === "completed" && <button style={styles.ctaDone}>Completed</button>}
                       </div>
-                    )}
-                    {task.status === "completed" && <button style={styles.ctaDone}>Completed</button>}
+                    </div>
 
                   </div>
                 </div>
@@ -686,7 +586,43 @@ export default function MemberDashboard() {
           </div>
         </section>
       )}
-    </div>
+
+      {/* APPS TAB */}
+      {activeTab === "apps" && (
+        <section style={styles.section}>
+          <div style={styles.sectionHead}>
+            <div style={styles.eyebrow}>TOOLING</div>
+            <h2 style={styles.sectionTitle}>Productivity Suite</h2>
+            <p style={styles.sectionLead}>Collaborate, plan, and document with your squad. Real-time tools.</p>
+          </div>
+
+          <div style={styles.appsGrid}>
+            {[
+              { title: "Team Chat", icon: <MessageCircle size={32} color="#00ff88" />, desc: "Real-time messaging channels", link: "/chat", action: null },
+              { title: "Project Board", icon: <Trello size={32} color="#00d1ff" />, desc: "Kanban task management", link: "/board", action: null },
+              { title: "Calendar", icon: <Calendar size={32} color="#ff0088" />, desc: "Schedule and events", link: "/calendar", action: null },
+              { title: "Video Meet", icon: <Video size={32} color="#ff9900" />, desc: "Secure video conferencing", link: null, action: handleRequestMeet },
+              { title: "Team Wiki", icon: <FileText size={32} color="#aa00ff" />, desc: "Collaborative documentation", link: "/docs", action: null },
+              { title: "Jamboard", icon: <Monitor size={32} color="#ffff00" />, desc: "Visual brainstorming canvas", link: "/whiteshi.html", action: null },
+            ].map((app, i) => (
+              <div
+                key={i}
+                style={styles.appCard}
+                onClick={() => {
+                  if (app.action) app.action()
+                  else if (app.link) window.open(app.link, "_blank")
+                }}
+              >
+                <div style={styles.appIconBox}>{app.icon}</div>
+                <h3 style={styles.appTitle}>{app.title}</h3>
+                <p style={styles.appDesc}>{app.desc}</p>
+                <button style={styles.launchBtn}>LAUNCH APP →</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div >
   )
 }
 
@@ -1111,6 +1047,59 @@ const styles: any = {
   statsRow: { marginTop: "40px", display: "flex", gap: "20px", borderTop: "1px solid #1a1a1a", paddingTop: "20px" },
   statCard: { marginRight: "40px" },
   statBig: { fontSize: "24px", fontWeight: "bold", color: "#fff" },
+
+
+  appsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+    gap: "20px",
+  },
+  appCard: {
+    background: "#0a0a0a",
+    border: "1px solid #1a1a1a",
+    borderRadius: "12px",
+    padding: "24px",
+    cursor: "pointer",
+    transition: "transform 0.2s, border-color 0.2s",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    ':hover': {
+      transform: "translateY(-4px)",
+      borderColor: "#333"
+    }
+  },
+  appIconBox: {
+    marginBottom: "16px",
+    padding: "12px",
+    background: "rgba(255, 255, 255, 0.03)",
+    borderRadius: "10px",
+  },
+  appTitle: {
+    fontSize: "16px",
+    fontWeight: "bold",
+    color: "#fff",
+    margin: "0 0 8px 0",
+  },
+  appDesc: {
+    fontSize: "12px",
+    color: "#666",
+    margin: "0 0 20px 0",
+    lineHeight: "1.5",
+    flex: 1,
+  },
+  launchBtn: {
+    background: "transparent",
+    border: "1px solid #333",
+    color: "#00ff88",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    fontSize: "11px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    width: "100%",
+    textAlign: "center" as const,
+  },
 }
 
 
