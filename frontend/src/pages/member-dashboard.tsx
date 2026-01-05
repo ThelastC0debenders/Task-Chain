@@ -1,16 +1,11 @@
-
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { claimTaskOnChain, completeTaskOnChain } from "../services/contract"
 import confetti from "canvas-confetti"
-<<<<<<< Updated upstream
 import { Monitor, Video, Trello, Code } from "lucide-react"
-=======
 import { ClickUpIntegration } from "../components/ClickUpIntegration"
 import { SyncToClickUp } from "../components/SyncToClickUp"
->>>>>>> Stashed changes
-
 const API = "http://localhost:5001"
 
 interface Task {
@@ -74,7 +69,7 @@ export default function MemberDashboard() {
   async function connectWalletHandler() {
     try {
       setLoading(true)
-      const addr = await connectAndVerify()
+      await connectAndVerify()
       setInviteStatus("Wallet connected")
     } catch (err: any) {
       setInviteStatus("Error: " + err.message)
@@ -430,7 +425,6 @@ export default function MemberDashboard() {
                       </button>
                     )}
 
-<<<<<<< Updated upstream
                     {isMyTask(task) && task.status === "claimed" && (
                         <div style={{display: 'flex', flexDirection: "column", gap: "10px", width: "100%", alignItems: "flex-end"}}>
                              <div style={{display: 'flex', gap: "8px"}}>
@@ -491,19 +485,7 @@ export default function MemberDashboard() {
                              </button>
                         </div>
                     )}
-=======
-                    {isTaskClaimed(task.id) && task.status === "claimed" && (
-                      <button onClick={() => handleCompleteTask(task.id)} style={styles.ctaGhost}>
-                        Complete
-                      </button>
-                    )}
-
-                    {(isTaskClaimed(task.id) || task.status === "claimed") && (
-                      <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
-                        Open Workspace
-                      </button>
-                    )}                    {task.status === "completed" && <button style={styles.ctaDone}>Completed</button>}
->>>>>>> Stashed changes
+                    {task.status === "completed" && <button style={styles.ctaDone}>Completed</button>}
 
                     {/* ClickUp Sync Button */}
                     <SyncToClickUp task={task} listId={clickUpListId} />
@@ -957,6 +939,14 @@ const styles: any = {
   statCard: { marginRight: "40px" },
   statBig: { fontSize: "24px", fontWeight: "bold", color: "#fff" },
 }
+
+
+
+
+
+
+
+
 
 
 
