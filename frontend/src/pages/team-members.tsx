@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import { Users, Search, Shield, User, RefreshCw, Hash } from "lucide-react"
 
-const API = "http://localhost:5001"
+const API = "/api"
 
 export default function TeamMembers() {
   const [teamId, setTeamId] = useState("team-123")

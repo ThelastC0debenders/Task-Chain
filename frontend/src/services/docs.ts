@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = "http://localhost:5001/docs"
+const API_URL = "/api/docs"
 
 export async function getDocs() {
     const res = await axios.get(`${API_URL}`)

@@ -25,7 +25,7 @@ import {
   PenTool
 } from "lucide-react"
 
-const API = "http://localhost:5001"
+const API = "/api"
 
 interface Task {
   id: string
@@ -94,7 +94,11 @@ export default function LeaderDashboard() {
         teamId,
         ttlSeconds: Number(ttlSeconds) || 3600,
       })
-      setInviteUrl(res.data.inviteUrl)
+      const token = res.data.token
+      const origin = window.location.origin // e.g., https://xyz.lhr.life or http://localhost:5173
+      const dynamicUrl = `${origin}/invite?token=${encodeURIComponent(token)}`
+
+      setInviteUrl(dynamicUrl)
       setStatus("✅ Invite created!")
       setTimeout(() => fetchMembers(), 500)
     } catch (err: any) {
@@ -487,6 +491,12 @@ export default function LeaderDashboard() {
                       {copied ? <Check size={14} color="#00ff88" /> : <Copy size={14} color="white" />}
                     </button>
                   </div>
+                  {window.location.hostname === 'localhost' && (
+                    <div style={{ marginTop: 10, padding: 10, background: 'rgba(255, 165, 0, 0.1)', border: '1px solid orange', borderRadius: 4, fontSize: 12, color: 'orange' }}>
+                      ⚠️ You are on localhost. This link will not work for others.
+                      <br /><strong>Open this dashboard using your SSH Public URL</strong> to generate a shareable link.
+                    </div>
+                  )}
                   <div style={styles.sigConfirmed}>🛡 Signature confirmed on-chain. <a href="#" style={styles.link}>View Transaction</a></div>
                 </div>
               )}

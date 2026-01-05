@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import { connectWallet } from "../services/wallet"
 
-const API = "http://localhost:5001"
+const API = "/api"
 
 export default function InviteDashboard() {
   const [token, setToken] = useState<string>("")
@@ -28,7 +28,7 @@ export default function InviteDashboard() {
       setStatus("🔌 Connecting wallet…")
       const { address } = await connectWallet()
       setWallet(address)
-      
+
       setStatus("✓ Wallet connected. Joining team…")
       const res = await axios.post(`${API}/team/accept`, { token, wallet: address })
       setTeamId(res.data.teamId)

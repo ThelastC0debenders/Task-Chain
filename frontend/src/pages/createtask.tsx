@@ -1,7 +1,7 @@
 import { useState } from "react"
 import axios from "axios"
 
-const API = "http://localhost:5001"
+const API = "/api"
 
 export default function CreateTask() {
   const [metadataHash, setMetadataHash] = useState("")
@@ -15,14 +15,14 @@ export default function CreateTask() {
     try {
       setError("")
       const deadlineTimestamp = Math.floor(new Date(deadline).getTime() / 1000)
-      
+
       const res = await axios.post(`${API}/task/create`, {
         metadataHash: metadataHash || "0x1234567890123456789012345678901234567890123456789012345678901234",
         deadline: deadlineTimestamp,
         gracePeriod: parseInt(gracePeriod),
         priority: parseInt(priority)
       })
-      
+
       setResult(res.data)
     } catch (err: any) {
       setError(err.response?.data?.error || err.message)
@@ -32,11 +32,11 @@ export default function CreateTask() {
   return (
     <div style={{ fontFamily: "Arial", padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
       <h1>TaskChain - Create Task</h1>
-      
+
       <div style={{ marginBottom: "20px" }}>
         <label style={{ display: "block", marginBottom: "5px" }}>Metadata Hash (bytes32):</label>
-        <input 
-          value={metadataHash} 
+        <input
+          value={metadataHash}
           onChange={e => setMetadataHash(e.target.value)}
           placeholder="0x1234...1234 (leave empty for default)"
           style={{ width: "100%", padding: "8px", fontSize: "14px" }}
@@ -45,9 +45,9 @@ export default function CreateTask() {
 
       <div style={{ marginBottom: "20px" }}>
         <label style={{ display: "block", marginBottom: "5px" }}>Deadline:</label>
-        <input 
+        <input
           type="datetime-local"
-          value={deadline} 
+          value={deadline}
           onChange={e => setDeadline(e.target.value)}
           style={{ width: "100%", padding: "8px", fontSize: "14px" }}
         />
@@ -55,9 +55,9 @@ export default function CreateTask() {
 
       <div style={{ marginBottom: "20px" }}>
         <label style={{ display: "block", marginBottom: "5px" }}>Grace Period (seconds):</label>
-        <input 
+        <input
           type="number"
-          value={gracePeriod} 
+          value={gracePeriod}
           onChange={e => setGracePeriod(e.target.value)}
           style={{ width: "100%", padding: "8px", fontSize: "14px" }}
         />
@@ -65,9 +65,9 @@ export default function CreateTask() {
 
       <div style={{ marginBottom: "20px" }}>
         <label style={{ display: "block", marginBottom: "5px" }}>Priority (0-255):</label>
-        <input 
+        <input
           type="number"
-          value={priority} 
+          value={priority}
           onChange={e => setPriority(e.target.value)}
           min="0"
           max="255"
@@ -75,7 +75,7 @@ export default function CreateTask() {
         />
       </div>
 
-      <button 
+      <button
         onClick={handleCreate}
         style={{ padding: "10px 20px", cursor: "pointer", fontSize: "16px" }}
       >

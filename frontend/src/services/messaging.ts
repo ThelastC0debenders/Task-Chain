@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = "http://localhost:5001/chat"
+const API_URL = "/api/chat"
 
 export async function getChannels(userId: string) {
     const res = await axios.get(`${API_URL}/channels?userId=${userId}`)

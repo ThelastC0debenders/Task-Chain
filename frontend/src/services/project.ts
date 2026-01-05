@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = "http://localhost:5001/board"
+const API_URL = "/api/board"
 
 export async function getBoards(teamId: string) {
     const res = await axios.get(`${API_URL}/${teamId}`)

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import { connectWallet } from "../services/wallet"
 
-const API = "http://localhost:5001"
+const API = "/api"
 
 export default function Invite() {
   const [token, setToken] = useState<string>("")

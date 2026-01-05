@@ -4,7 +4,7 @@ import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { claimTaskOnChain, completeTaskOnChain } from "../services/contract"
 import confetti from "canvas-confetti"
 import { Monitor, Video, Code, MessageCircle, Trello, Calendar, FileText, Palette } from "lucide-react"
-const API = "http://localhost:5001"
+const API = "/api"
 interface Task {
   id: string
   title: string
@@ -40,11 +40,11 @@ export default function MemberDashboard() {
     // Restore "Joined" state
     const savedTeam = localStorage.getItem("taskchain_joinedTeam")
     if (savedTeam) {
-        setJoinedTeam(savedTeam)
-        setTeamId(savedTeam)
-        if (!tokenParam) setActiveTab("tasks")
+      setJoinedTeam(savedTeam)
+      setTeamId(savedTeam)
+      if (!tokenParam) setActiveTab("tasks")
     } else if (tokenParam) {
-        setActiveTab("join")
+      setActiveTab("join")
     }
 
     // Silent wallet check
@@ -419,128 +419,128 @@ export default function MemberDashboard() {
                     )}
 
                     {isMyTask(task) && task.status === "claimed" && (
-                        <div style={{display: 'flex', flexDirection: "column", gap: "10px", width: "100%", alignItems: "flex-end"}}>
-                             <div style={{display: 'flex', gap: "8px"}}>
-                                <button 
-                                    onClick={() => window.open("/whiteshi.html", "_blank")} 
-                                    style={styles.toolBtn}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#00ff88";
-                                        e.currentTarget.style.color = "#00ff88";
-                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#333";
-                                        e.currentTarget.style.color = "#888";
-                                        e.currentTarget.style.background = "#111";
-                                    }}
-                                >
-                                    <Monitor size={14} /> Jamboard
-                                </button>
-                                <button 
-                                    onClick={() => alert("Google Meet not integrated yet")} 
-                                    style={styles.toolBtn}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#00ff88";
-                                        e.currentTarget.style.color = "#00ff88";
-                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#333";
-                                        e.currentTarget.style.color = "#888";
-                                        e.currentTarget.style.background = "#111";
-                                    }}
-                                >
-                                    <Video size={14} /> Meet
-                                </button>
-                                <button 
-                                    onClick={() => window.open("/chat", "_blank")} 
-                                    style={styles.toolBtn}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#00ff88";
-                                        e.currentTarget.style.color = "#00ff88";
-                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#333";
-                                        e.currentTarget.style.color = "#888";
-                                        e.currentTarget.style.background = "#111";
-                                    }}
-                                >
-                                    <MessageCircle size={14} /> Chat
-                                </button>
-                                <button 
-                                    onClick={() => window.open("/board", "_blank")} 
-                                    style={styles.toolBtn}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#00ff88";
-                                        e.currentTarget.style.color = "#00ff88";
-                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#333";
-                                        e.currentTarget.style.color = "#888";
-                                        e.currentTarget.style.background = "#111";
-                                    }}
-                                >
-                                    <Trello size={14} /> Kanban
-                                </button>
-                                <button 
-                                    onClick={() => window.open("/calendar", "_blank")} 
-                                    style={styles.toolBtn}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#00ff88";
-                                        e.currentTarget.style.color = "#00ff88";
-                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#333";
-                                        e.currentTarget.style.color = "#888";
-                                        e.currentTarget.style.background = "#111";
-                                    }}
-                                >
-                                    <Calendar size={14} /> Calendar
-                                </button>
-                                <button 
-                                    onClick={() => window.open("/docs", "_blank")} 
-                                    style={styles.toolBtn}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#00ff88";
-                                        e.currentTarget.style.color = "#00ff88";
-                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#333";
-                                        e.currentTarget.style.color = "#888";
-                                        e.currentTarget.style.background = "#111";
-                                    }}
-                                >
-                                    <FileText size={14} /> Docs
-                                </button>
-                                <button 
-                                    onClick={() => window.open("/whiteboard", "_blank")} 
-                                    style={styles.toolBtn}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#00ff88";
-                                        e.currentTarget.style.color = "#00ff88";
-                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#333";
-                                        e.currentTarget.style.color = "#888";
-                                        e.currentTarget.style.background = "#111";
-                                    }}
-                                >
-                                    <Palette size={14} /> Whiteboard
-                                </button>
-                                <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
-                                    <Code size={14} /> Open Workspace
-                                </button>
-                             </div>
-                             <button onClick={() => handleCompleteTask(task.id)} style={{...styles.ctaPrimary, background: "#1f6feb", color: "#fff"}}>
-                                Complete Task (Submit)
-                             </button>
+                      <div style={{ display: 'flex', flexDirection: "column", gap: "10px", width: "100%", alignItems: "flex-end" }}>
+                        <div style={{ display: 'flex', gap: "8px" }}>
+                          <button
+                            onClick={() => window.open("/whiteshi.html", "_blank")}
+                            style={styles.toolBtn}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = "#00ff88";
+                              e.currentTarget.style.color = "#00ff88";
+                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = "#333";
+                              e.currentTarget.style.color = "#888";
+                              e.currentTarget.style.background = "#111";
+                            }}
+                          >
+                            <Monitor size={14} /> Jamboard
+                          </button>
+                          <button
+                            onClick={() => alert("Google Meet not integrated yet")}
+                            style={styles.toolBtn}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = "#00ff88";
+                              e.currentTarget.style.color = "#00ff88";
+                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = "#333";
+                              e.currentTarget.style.color = "#888";
+                              e.currentTarget.style.background = "#111";
+                            }}
+                          >
+                            <Video size={14} /> Meet
+                          </button>
+                          <button
+                            onClick={() => window.open("/chat", "_blank")}
+                            style={styles.toolBtn}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = "#00ff88";
+                              e.currentTarget.style.color = "#00ff88";
+                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = "#333";
+                              e.currentTarget.style.color = "#888";
+                              e.currentTarget.style.background = "#111";
+                            }}
+                          >
+                            <MessageCircle size={14} /> Chat
+                          </button>
+                          <button
+                            onClick={() => window.open("/board", "_blank")}
+                            style={styles.toolBtn}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = "#00ff88";
+                              e.currentTarget.style.color = "#00ff88";
+                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = "#333";
+                              e.currentTarget.style.color = "#888";
+                              e.currentTarget.style.background = "#111";
+                            }}
+                          >
+                            <Trello size={14} /> Kanban
+                          </button>
+                          <button
+                            onClick={() => window.open("/calendar", "_blank")}
+                            style={styles.toolBtn}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = "#00ff88";
+                              e.currentTarget.style.color = "#00ff88";
+                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = "#333";
+                              e.currentTarget.style.color = "#888";
+                              e.currentTarget.style.background = "#111";
+                            }}
+                          >
+                            <Calendar size={14} /> Calendar
+                          </button>
+                          <button
+                            onClick={() => window.open("/docs", "_blank")}
+                            style={styles.toolBtn}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = "#00ff88";
+                              e.currentTarget.style.color = "#00ff88";
+                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = "#333";
+                              e.currentTarget.style.color = "#888";
+                              e.currentTarget.style.background = "#111";
+                            }}
+                          >
+                            <FileText size={14} /> Docs
+                          </button>
+                          <button
+                            onClick={() => window.open("/whiteboard", "_blank")}
+                            style={styles.toolBtn}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = "#00ff88";
+                              e.currentTarget.style.color = "#00ff88";
+                              e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = "#333";
+                              e.currentTarget.style.color = "#888";
+                              e.currentTarget.style.background = "#111";
+                            }}
+                          >
+                            <Palette size={14} /> Whiteboard
+                          </button>
+                          <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
+                            <Code size={14} /> Open Workspace
+                          </button>
                         </div>
+                        <button onClick={() => handleCompleteTask(task.id)} style={{ ...styles.ctaPrimary, background: "#1f6feb", color: "#fff" }}>
+                          Complete Task (Submit)
+                        </button>
+                      </div>
                     )}
                     {task.status === "completed" && <button style={styles.ctaDone}>Completed</button>}
 

@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = "http://localhost:5001/calendar"
+const API_URL = "/api/calendar"
 
 export async function getEvents() {
     const res = await axios.get(`${API_URL}`)

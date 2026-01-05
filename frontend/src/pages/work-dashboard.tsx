@@ -4,7 +4,7 @@ import axios from "axios"
 import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { Terminal, Code, GitCommit, RefreshCw, AlertTriangle, File as FileIcon, Save, Wallet } from "lucide-react"
 
-const API = "http://localhost:5001"
+const API = "/api"
 
 interface WorkspaceFile {
   path: string
@@ -195,59 +195,59 @@ export default function WorkDashboard() {
     }
   }
 
- async function commitChanges() {
-  if (!address) {
-    setError("❌ Connect wallet to commit")
-    return
-  }
-  if (!commitMessage.trim()) {
-    setError("❌ Enter commit message")
-    return
-  }
-
-  try {
-    // ===== COMMIT PHASE =====
-    setLoading(true)
-
-    const res = await axios.post(
-      `${API}/workspace/${taskId}/${claimId}/commit`,
-      {
-        message: commitMessage,
-        author: address
-      }
-    )
-
-    if (!res.data.ok) throw new Error("Commit failed")
-
-    setError("✅ Changes committed!")
-    setCommitMessage("")
-    setMode("commit")
-
-    // 🔑 END commit phase
-    setLoading(false)
-
-    // ===== PUSH PHASE =====
-    setPushing(true)
-    setError("🚀 Pushing changes...")
-
-    const pushRes = await axios.post(
-      `${API}/workspace/${taskId}/${claimId}/push`
-    )
-
-    if (!pushRes.data.ok) {
-      setError("⚠️ Commit done, push failed")
-    } else {
-      setError("🚀 Changes committed & pushed!")
+  async function commitChanges() {
+    if (!address) {
+      setError("❌ Connect wallet to commit")
+      return
+    }
+    if (!commitMessage.trim()) {
+      setError("❌ Enter commit message")
+      return
     }
 
-    setTimeout(() => setError(""), 3000)
-  } catch (err: any) {
-    setError("❌ " + (err.response?.data?.error || err.message))
-    setLoading(false)
-  } finally {
-    setPushing(false)
+    try {
+      // ===== COMMIT PHASE =====
+      setLoading(true)
+
+      const res = await axios.post(
+        `${API}/workspace/${taskId}/${claimId}/commit`,
+        {
+          message: commitMessage,
+          author: address
+        }
+      )
+
+      if (!res.data.ok) throw new Error("Commit failed")
+
+      setError("✅ Changes committed!")
+      setCommitMessage("")
+      setMode("commit")
+
+      // 🔑 END commit phase
+      setLoading(false)
+
+      // ===== PUSH PHASE =====
+      setPushing(true)
+      setError("🚀 Pushing changes...")
+
+      const pushRes = await axios.post(
+        `${API}/workspace/${taskId}/${claimId}/push`
+      )
+
+      if (!pushRes.data.ok) {
+        setError("⚠️ Commit done, push failed")
+      } else {
+        setError("🚀 Changes committed & pushed!")
+      }
+
+      setTimeout(() => setError(""), 3000)
+    } catch (err: any) {
+      setError("❌ " + (err.response?.data?.error || err.message))
+      setLoading(false)
+    } finally {
+      setPushing(false)
+    }
   }
-}
 
 
   const currentFile = files.find(f => f.path === activeFile)
@@ -375,8 +375,8 @@ export default function WorkDashboard() {
                       {loading
                         ? "COMMITTING..."
                         : pushing
-                        ? "PUSHING..."
-                        : "COMMIT"}
+                          ? "PUSHING..."
+                          : "COMMIT"}
                     </button>
 
                   </div>

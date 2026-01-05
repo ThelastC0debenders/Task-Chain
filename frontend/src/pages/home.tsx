@@ -2,7 +2,7 @@ import { useState } from "react"
 import axios from "axios"
 import { Link } from "react-router-dom"
 
-const API = "http://localhost:5001"
+const API = "/api"
 
 export default function Home() {
   const [taskIdClaim, setTaskIdClaim] = useState("")
@@ -65,15 +65,15 @@ export default function Home() {
   return (
     <div style={{ fontFamily: "Arial", padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
       <h1>TaskChain API Tester</h1>
-      
+
       <div>
         {output.map((item, i) => (
-          <pre 
+          <pre
             key={i}
-            style={{ 
-              background: item.isError ? "#f8d7da" : "#d4edda", 
-              padding: "10px", 
-              borderRadius: "5px", 
+            style={{
+              background: item.isError ? "#f8d7da" : "#d4edda",
+              padding: "10px",
+              borderRadius: "5px",
               overflowX: "auto",
               marginBottom: "10px"
             }}
@@ -82,16 +82,16 @@ export default function Home() {
           </pre>
         ))}
       </div>
-      
+
       <h2>1. Create Task</h2>
       <button onClick={createTask} style={{ padding: "10px 20px", margin: "5px", cursor: "pointer" }}>
         Create Task
       </button>
-      
+
       <h2>2. Claim Task</h2>
-      <input 
-        id="taskIdClaim" 
-        placeholder="Task ID" 
+      <input
+        id="taskIdClaim"
+        placeholder="Task ID"
         type="number"
         value={taskIdClaim}
         onChange={e => setTaskIdClaim(e.target.value)}
@@ -100,11 +100,11 @@ export default function Home() {
       <button onClick={claimTask} style={{ padding: "10px 20px", margin: "5px", cursor: "pointer" }}>
         Claim Task
       </button>
-      
+
       <h2>3. Complete Task (Anchor Receipt)</h2>
-      <input 
-        id="taskIdComplete" 
-        placeholder="Task ID" 
+      <input
+        id="taskIdComplete"
+        placeholder="Task ID"
         type="number"
         value={taskIdComplete}
         onChange={e => setTaskIdComplete(e.target.value)}
@@ -113,11 +113,11 @@ export default function Home() {
       <button onClick={completeTask} style={{ padding: "10px 20px", margin: "5px", cursor: "pointer" }}>
         Complete Task
       </button>
-      
+
       <h2>4. Get Task Details</h2>
-      <input 
-        id="taskIdGet" 
-        placeholder="Task ID" 
+      <input
+        id="taskIdGet"
+        placeholder="Task ID"
         type="number"
         value={taskIdGet}
         onChange={e => setTaskIdGet(e.target.value)}
