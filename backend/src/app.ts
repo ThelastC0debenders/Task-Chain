@@ -14,5 +14,9 @@ app.use("/task", routes.taskRoutes)
 app.use("/team", routes.teamRoutes)
 app.use("/workspace", routes.workspaceRoutes)
 app.use("/clickup", routes.clickupRoutes)
+app.use("/chat", routes.chatRoutes)
+app.use("/board", routes.boardRoutes)
+app.use("/calendar", routes.calendarRoutes)
+app.use("/docs", routes.docsRoutes)
 
 export default app

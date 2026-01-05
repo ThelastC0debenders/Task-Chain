@@ -3,7 +3,7 @@ import axios from "axios"
 import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { claimTaskOnChain, completeTaskOnChain } from "../services/contract"
 import confetti from "canvas-confetti"
-import { Monitor, Video, Code } from "lucide-react"
+import { Monitor, Video, Code, MessageCircle, Trello, Calendar, FileText, Palette } from "lucide-react"
 const API = "http://localhost:5001"
 interface Task {
   id: string
@@ -452,7 +452,88 @@ export default function MemberDashboard() {
                                     }}
                                 >
                                     <Video size={14} /> Meet
-                                </button>                                <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
+                                </button>
+                                <button 
+                                    onClick={() => window.open("/chat", "_blank")} 
+                                    style={styles.toolBtn}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#00ff88";
+                                        e.currentTarget.style.color = "#00ff88";
+                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#333";
+                                        e.currentTarget.style.color = "#888";
+                                        e.currentTarget.style.background = "#111";
+                                    }}
+                                >
+                                    <MessageCircle size={14} /> Chat
+                                </button>
+                                <button 
+                                    onClick={() => window.open("/board", "_blank")} 
+                                    style={styles.toolBtn}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#00ff88";
+                                        e.currentTarget.style.color = "#00ff88";
+                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#333";
+                                        e.currentTarget.style.color = "#888";
+                                        e.currentTarget.style.background = "#111";
+                                    }}
+                                >
+                                    <Trello size={14} /> Kanban
+                                </button>
+                                <button 
+                                    onClick={() => window.open("/calendar", "_blank")} 
+                                    style={styles.toolBtn}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#00ff88";
+                                        e.currentTarget.style.color = "#00ff88";
+                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#333";
+                                        e.currentTarget.style.color = "#888";
+                                        e.currentTarget.style.background = "#111";
+                                    }}
+                                >
+                                    <Calendar size={14} /> Calendar
+                                </button>
+                                <button 
+                                    onClick={() => window.open("/docs", "_blank")} 
+                                    style={styles.toolBtn}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#00ff88";
+                                        e.currentTarget.style.color = "#00ff88";
+                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#333";
+                                        e.currentTarget.style.color = "#888";
+                                        e.currentTarget.style.background = "#111";
+                                    }}
+                                >
+                                    <FileText size={14} /> Docs
+                                </button>
+                                <button 
+                                    onClick={() => window.open("/whiteboard", "_blank")} 
+                                    style={styles.toolBtn}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#00ff88";
+                                        e.currentTarget.style.color = "#00ff88";
+                                        e.currentTarget.style.background = "rgba(0, 255, 136, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#333";
+                                        e.currentTarget.style.color = "#888";
+                                        e.currentTarget.style.background = "#111";
+                                    }}
+                                >
+                                    <Palette size={14} /> Whiteboard
+                                </button>
+                                <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
                                     <Code size={14} /> Open Workspace
                                 </button>
                              </div>
@@ -913,6 +994,9 @@ const styles: any = {
   statCard: { marginRight: "40px" },
   statBig: { fontSize: "24px", fontWeight: "bold", color: "#fff" },
 }
+
+
+
 
 
 

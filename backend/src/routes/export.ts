@@ -4,6 +4,10 @@ import taskRoutes from "./task"
 import teamRoutes from "./team"
 import workspaceRoutes from "./workspace"
 import clickupRoutes from "./clickup"
+import chatRoutes from "./chat"
+import boardRoutes from "./board"
+import calendarRoutes from "./calendar"
+import docsRoutes from "./docs"
 
 export default {
   ipfsRoutes,
@@ -12,4 +16,8 @@ export default {
   teamRoutes,
   workspaceRoutes,
   clickupRoutes,
+  chatRoutes,
+  boardRoutes,
+  calendarRoutes,
+  docsRoutes,
 }

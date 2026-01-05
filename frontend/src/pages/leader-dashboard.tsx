@@ -16,7 +16,13 @@ import {
   Copy,
   Check,
   Shield,
-  Rocket
+  Rocket,
+  MessageSquare,
+  Layout,
+  Calendar,
+  Video,
+  FileText,
+  PenTool
 } from "lucide-react"
 
 const API = "http://localhost:5001"
@@ -42,7 +48,7 @@ export default function LeaderDashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [status, setStatus] = useState("")
   const [copied, setCopied] = useState(false)
-  const [activeTab, setActiveTab] = useState<"tasks" | "invite">("tasks") // Default to tasks to match image
+  const [activeTab, setActiveTab] = useState<"tasks" | "invite" | "apps">("tasks") // Default to tasks to match image
 
   // Task Form State
   const [taskForm, setTaskForm] = useState({
@@ -251,13 +257,19 @@ export default function LeaderDashboard() {
           >
             <Users size={16} /> Team Invites
           </button>
+          <button
+            onClick={() => setActiveTab("apps")}
+            style={styles.tabBtn(activeTab === "apps")}
+          >
+            <Layout size={16} /> Productivity Apps
+          </button>
         </div>
 
         {/* Section Title */}
         <div style={styles.sectionHeader}>
           <div style={styles.sectionTitleBorder}></div>
           <h2 style={styles.sectionTitle}>
-            {activeTab === "tasks" ? "Task Creation" : "Team Invites"}
+            {activeTab === "tasks" ? "Task Creation" : activeTab === "invite" ? "Team Invites" : "Workspace Apps"}
           </h2>
           <div style={styles.protocolText}>PROTOCOL V2.1 // ACTIVE</div>
         </div>
@@ -515,6 +527,31 @@ export default function LeaderDashboard() {
           </div>
         )}
 
+        {/* Apps Tab UI */}
+        {activeTab === "apps" && (
+          <div style={styles.appsGrid}>
+            {[
+              { title: "Team Chat", icon: <MessageSquare size={32} color="#00ff88" />, desc: "Real-time messaging channels", link: "/chat" },
+              { title: "Project Board", icon: <Layout size={32} color="#00d1ff" />, desc: "Kanban task management", link: "/board" },
+              { title: "Calendar", icon: <Calendar size={32} color="#ff0088" />, desc: "Schedule and events", link: "/calendar" },
+              { title: "Video Meet", icon: <Video size={32} color="#ff9900" />, desc: "Secure video conferencing", link: "/meet" },
+              { title: "Team Wiki", icon: <FileText size={32} color="#aa00ff" />, desc: "Collaborative documentation", link: "/docs" },
+              { title: "Whiteboard", icon: <PenTool size={32} color="#ffff00" />, desc: "Visual brainstorming canvas", link: "/whiteboard" },
+            ].map((app, i) => (
+              <div
+                key={i}
+                style={styles.appCard}
+                onClick={() => window.location.href = app.link}
+              >
+                <div style={styles.appIconBox}>{app.icon}</div>
+                <h3 style={styles.appTitle}>{app.title}</h3>
+                <p style={styles.appDesc}>{app.desc}</p>
+                <button style={styles.launchBtn}>LAUNCH APP →</button>
+              </div>
+            ))}
+          </div>
+        )}
+
       </div>
 
       {/* Footer / Quick View */}
@@ -541,7 +578,7 @@ export default function LeaderDashboard() {
         </div>
       </div>
 
-    </div>
+    </div >
   )
 }
 
@@ -747,6 +784,58 @@ const styles: any = {
     alignItems: "start",
     width: "100%", // Force full width
   }),
+  appsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+    gap: "24px",
+    width: "100%",
+  },
+  appCard: {
+    background: "#0a0a0a",
+    border: "1px solid #1f1f1f",
+    borderRadius: "12px",
+    padding: "30px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+    cursor: "pointer",
+    transition: "transform 0.2s, border-color 0.2s",
+    minHeight: "220px",
+  },
+  appIconBox: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "12px",
+    background: "rgba(255,255,255,0.03)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "20px",
+  },
+  appTitle: {
+    margin: "0 0 10px 0",
+    color: "white",
+    fontSize: "18px",
+    fontWeight: "bold",
+  },
+  appDesc: {
+    margin: "0 0 20px 0",
+    color: "#888",
+    fontSize: "13px",
+    lineHeight: "1.4",
+  },
+  launchBtn: {
+    marginTop: "auto",
+    background: "transparent",
+    border: "1px solid #333",
+    color: "#00ff88",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    fontSize: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
   card: {
     background: "#0a0a0a",
     border: "1px solid #1f1f1f",

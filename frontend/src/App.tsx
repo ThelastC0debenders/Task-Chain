@@ -6,6 +6,12 @@ import Receipt from "./pages/receipt"
 import LeaderDashboard from "./pages/leader-dashboard"
 import MemberDashboard from "./pages/member-dashboard"
 import WorkDashboard from "./pages/work-dashboard"
+import ChatLayout from "./pages/chat-layout"
+import KanbanBoard from "./pages/kanban-board"
+import CalendarLayout from "./pages/calendar"
+import MeetingRoom from "./pages/meeting"
+import DocsLayout from "./pages/docs-layout"
+import Whiteboard from "./pages/whiteboard"
 
 export default function App() {
   return (
@@ -19,6 +25,14 @@ export default function App() {
         <Route path="/member" element={<MemberDashboard />} />
         <Route path="/work" element={<WorkDashboard />} />
         <Route path="/invite" element={<MemberDashboard />} />
+
+        {/* Productivity Suite */}
+        <Route path="/chat" element={<ChatLayout />} />
+        <Route path="/board" element={<KanbanBoard />} />
+        <Route path="/calendar" element={<CalendarLayout />} />
+        <Route path="/meet" element={<MeetingRoom />} />
+        <Route path="/docs" element={<DocsLayout />} />
+        <Route path="/whiteboard" element={<Whiteboard />} />
       </Routes>
     </BrowserRouter>
   )

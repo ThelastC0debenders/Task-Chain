@@ -505,6 +505,7 @@
         }
         window.addEventListener('resize', () => { resize(); });
         setTimeout(resize, 100); // Initial
+        loadAutoSaved(); // Load last session
         saveHistory();
 
         // --- Tool Logic ---
@@ -947,3 +948,4 @@
     </script>
 </body>
 </html>
+
