@@ -205,7 +205,7 @@ export default function LeaderDashboard() {
         <div style={styles.headerTitle}>Leader Dashboard</div>
 
         <div style={styles.headerActions}>
-          <div style={styles.betaBadge}>Mainnet Beta</div>
+          {/* <div style={styles.betaBadge}>Mainnet Beta</div> */}
           {address ? (
             <div style={styles.walletBadge}>
               <Wallet size={14} />
