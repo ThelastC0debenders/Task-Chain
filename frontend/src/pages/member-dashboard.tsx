@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from "react"
 import axios from "axios"
-import { connectWallet, checkWalletConnection } from "../services/wallet"
+import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { claimTaskOnChain, completeTaskOnChain } from "../services/contract"
 import confetti from "canvas-confetti"
+import { Monitor, Video, Trello, Code } from "lucide-react"
 
 const API = "http://localhost:5001"
 
@@ -38,17 +40,14 @@ export default function MemberDashboard() {
     const params = new URLSearchParams(window.location.search)
     const tokenParam = params.get("token") || ""
     setToken(tokenParam)
-
-    // Check storage for persistence
+    // Restore "Joined" state
     const savedTeam = localStorage.getItem("taskchain_joinedTeam")
-
-    // If we have a saved team and NO fresh token, jump to tasks
-    if (savedTeam && !tokenParam) {
-      setJoinedTeam(savedTeam)
-      setTeamId(savedTeam)
-      setActiveTab("tasks")
+    if (savedTeam) {
+        setJoinedTeam(savedTeam)
+        setTeamId(savedTeam)
+        if (!tokenParam) setActiveTab("tasks")
     } else if (tokenParam) {
-      setActiveTab("join")
+        setActiveTab("join")
     }
 
     // Silent wallet check
@@ -150,8 +149,8 @@ export default function MemberDashboard() {
       })
       setClaimedTasks([...claimedTasks, taskId])
       setTasks(tasks.map(t => (t.id === taskId ? { ...t, status: "claimed", claimedBy: address } : t)))
-      const claimId = `claim-${Date.now()}-${address.slice(0, 6)}`
-      await startWorkspace(taskId, claimId)
+      // const claimId = `claim-${Date.now()}-${address.slice(0, 6)}`
+      // await startWorkspace(taskId, claimId)
       alert(`Task #${taskId} claimed on-chain`)
     } catch (err: any) {
       console.error("Error claiming task:", err)
@@ -190,20 +189,20 @@ export default function MemberDashboard() {
 
   const filteredTasks = tasks.filter(t => {
     if (filter === "open") return t.status === "open"
-    if (filter === "claimed") return claimedTasks.includes(t.id)
+    if (filter === "claimed") return claimedTasks.includes(t.id) || t.claimedBy === address
     return true
   })
 
   const openCount = tasks.filter(t => t.status === "open").length
   const completedCount = tasks.filter(t => t.status === "completed").length
 
+  const isMyTask = (task: Task) => claimedTasks.includes(task.id) || task.claimedBy === address
+
   const getPriorityLabel = (priority: number) => {
     if (priority >= 8) return "Critical"
     if (priority >= 5) return "High"
     return "Normal"
   }
-
-  const isTaskClaimed = (taskId: string) => claimedTasks.includes(taskId)
 
 
 
@@ -370,7 +369,7 @@ export default function MemberDashboard() {
                 onClick={() => setFilter("claimed")}
                 style={{ ...styles.filterPill, ...(filter === "claimed" ? styles.filterPillActive : {}) }}
               >
-                Mine ({claimedTasks.length})
+                Mine ({tasks.filter(t => isMyTask(t)).length})
               </button>
             </div>
           </div>
@@ -411,7 +410,7 @@ export default function MemberDashboard() {
                   </div>
 
                   <div style={styles.actionsRow}>
-                    {!isTaskClaimed(task.id) && task.status === "open" && (
+                    {!isMyTask(task) && task.status === "open" && (
                       <button
                         onClick={() => handleClaimTask(task.id)}
                         disabled={!address}
@@ -421,16 +420,26 @@ export default function MemberDashboard() {
                       </button>
                     )}
 
-                    {isTaskClaimed(task.id) && task.status === "claimed" && (
-                      <button onClick={() => handleCompleteTask(task.id)} style={styles.ctaGhost}>
-                        Complete
-                      </button>
-                    )}
-
-                    {(isTaskClaimed(task.id) || task.status === "claimed") && (
-                      <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
-                        Open Workspace
-                      </button>
+                    {isMyTask(task) && task.status === "claimed" && (
+                        <div style={{display: 'flex', flexDirection: "column", gap: "10px", width: "100%", alignItems: "flex-end"}}>
+                             <div style={{display: 'flex', gap: "8px"}}>
+                                <button onClick={() => alert("Jamboard not integrated yet")} style={styles.toolBtn}>
+                                    <Monitor size={14} /> Jamboard
+                                </button>
+                                <button onClick={() => alert("Google Meet not integrated yet")} style={styles.toolBtn}>
+                                    <Video size={14} /> Meet
+                                </button>
+                                <button onClick={() => alert("Kanban not integrated yet")} style={styles.toolBtn}>
+                                    <Trello size={14} /> Kanban
+                                </button>
+                                <button onClick={() => startWorkspace(task.id)} style={styles.ctaGhost}>
+                                    <Code size={14} /> Open Workspace
+                                </button>
+                             </div>
+                             <button onClick={() => handleCompleteTask(task.id)} style={{...styles.ctaPrimary, background: "#1f6feb", color: "#fff"}}>
+                                Complete Task (Submit)
+                             </button>
+                        </div>
                     )}
 
                     {task.status === "completed" && <button style={styles.ctaDone}>Completed</button>}
@@ -531,6 +540,23 @@ const styles: any = {
     fontWeight: "600",
     cursor: "pointer",
     textTransform: "uppercase",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  toolBtn: {
+    background: "#111",
+    border: "1px solid #333",
+    color: "#888",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    fontSize: "12px",
+    fontWeight: "600",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    transition: "all 0.2s",
   },
   ctaDone: {
     background: "#111",

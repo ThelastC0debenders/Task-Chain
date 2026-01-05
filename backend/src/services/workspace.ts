@@ -48,8 +48,8 @@ export function getFileStructure(workspacePath: string, scope: FileScope[]) {
 
       if (!permission) {
         // Check if any parent path grants permission
-        // [MODIFIED] Added support for "." as root scope
-        const parentScope = scope.find(s =>
+        // [MODIFIED] Added support for "." as root scope by checking if s.path is "."
+        const parentScope = scope.find(s => 
           s.path === "." || relativePath.startsWith(s.path + "/")
         )
         if (parentScope) {
@@ -127,9 +127,7 @@ export function commitChanges(workspacePath: string, message: string, author: st
     })
     return { ok: true, commit: commitOutput }
   } catch (err: any) {
-    // execSync throws an error with stdout/stderr properties
-    const errorMsg = err.stderr?.toString() || err.stdout?.toString() || err.message
-    return { ok: false, error: errorMsg }
+    return { ok: false, error: err.message }
   }
 }
 
