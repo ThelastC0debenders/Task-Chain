@@ -38,6 +38,16 @@ export function updateTask(teamId: string, taskId: string, updates: any) {
     throw new Error("Task claimed by another user")
   }
 
+  if (updates.status === "claimed" && task.status !== "claimed") {
+    // If just claimed, set timestamp
+    updates.claimedAt = new Date().toISOString()
+  }
+
+  if (updates.status === "completed" && task.status !== "completed") {
+    // If just completed, set timestamp
+    updates.completedAt = new Date().toISOString()
+  }
+
   teamTasks[taskIndex] = { ...teamTasks[taskIndex], ...updates }
   return teamTasks[taskIndex]
 }

@@ -3,7 +3,7 @@ import axios from "axios"
 import { checkWalletConnection, connectWallet } from "../services/wallet"
 import { claimTaskOnChain, completeTaskOnChain } from "../services/contract"
 import confetti from "canvas-confetti"
-import { Monitor, Video, Code, MessageCircle, Trello, Calendar, FileText } from "lucide-react"
+import { Monitor, Video, Code, MessageCircle, Trello, Calendar, FileText, Activity } from "lucide-react"
 import { doc, onSnapshot } from "firebase/firestore"
 import { db } from "../services/firebase"
 
@@ -599,6 +599,7 @@ export default function MemberDashboard() {
           <div style={styles.appsGrid}>
             {[
               { title: "Team Chat", icon: <MessageCircle size={32} color="#00ff88" />, desc: "Real-time messaging channels", link: "/chat", action: null },
+              { title: "Team Health", icon: <Activity size={32} color="#ff3333" />, desc: "Burnout & Velocity Analytics", link: "/health", action: null },
               { title: "Project Board", icon: <Trello size={32} color="#00d1ff" />, desc: "Kanban task management", link: `/board/default-${teamId}`, action: null },
               { title: "Calendar", icon: <Calendar size={32} color="#ff0088" />, desc: "Schedule and events", link: "/calendar", action: null },
               { title: "Video Meet", icon: <Video size={32} color="#ff9900" />, desc: "Secure video conferencing", link: null, action: handleRequestMeet },

@@ -22,7 +22,8 @@ import {
   Calendar,
   Video,
   FileText,
-  Monitor
+  Monitor,
+  Activity
 } from "lucide-react"
 
 const API = "/api"
@@ -542,6 +543,7 @@ export default function LeaderDashboard() {
           <div style={styles.appsGrid}>
             {[
               { title: "Team Chat", icon: <MessageSquare size={32} color="#00ff88" />, desc: "Real-time messaging channels", link: "/chat" },
+              { title: "Team Health", icon: <Activity size={32} color="#ff3333" />, desc: "Burnout & Velocity Analytics", link: "/health" },
               { title: "Project Board", icon: <Layout size={32} color="#00d1ff" />, desc: "Kanban task management", link: `/board/default-${teamId}` },
               { title: "Calendar", icon: <Calendar size={32} color="#ff0088" />, desc: "Schedule and events", link: "/calendar" },
               { title: "Video Meet", icon: <Video size={32} color="#ff9900" />, desc: "Secure video conferencing", link: "/meet" },

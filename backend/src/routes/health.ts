@@ -12,6 +12,8 @@ interface HealthMetrics {
     statusBreakdown: { name: string, value: number }[]
     workloadDistribution: { name: string, value: number }[]
     screenTime: { user: string, hours: number }[]
+    trends: { day: string, completed: number, added: number }[]
+    categories: { subject: string, A: number, fullMark: number }[]
 }
 
 router.get("/team/:teamId", (req, res) => {
@@ -113,6 +115,47 @@ router.get("/team/:teamId", (req, res) => {
 
         console.log("Calculated Health Metrics:", { totalTasks, completedTasks })
 
+        // 6. Trends (Activity Pulse - Last 7 Days)
+        const trends = []
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date()
+            d.setDate(d.getDate() - i)
+            const dateStr = d.toISOString().split('T')[0]
+            const dayName = d.toLocaleDateString('en-US', { weekday: 'short' })
+
+            // Count tasks completed/created on this day
+            const completedCount = tasks.filter(t => t.completedAt && new Date(t.completedAt).toISOString().startsWith(dateStr)).length
+            // Approx creation date (using ID timestamp if available, fallback to now)
+            const addedCount = tasks.filter(t => {
+                const created = new Date(Number(t.id)) // Assuming ID is timestamp
+                return !isNaN(created.getTime()) && created.toISOString().startsWith(dateStr)
+            }).length
+
+            trends.push({ day: dayName, completed: completedCount, added: addedCount })
+        }
+
+        // 7. Categories (Skill Matrix)
+        const categoryCounts: Record<string, number> = {}
+        const totalCatTasks = tasks.length
+        tasks.forEach(t => {
+            const cat = t.category || "Uncategorized" // If category missing
+            categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
+        })
+
+        const categories = Object.keys(categoryCounts).map(cat => ({
+            subject: cat,
+            A: categoryCounts[cat] * 10, // Scale for radar chart (mock scaling)
+            fullMark: 150
+        }))
+
+        // Ensure at least some default categories if empty
+        if (categories.length === 0) {
+            categories.push(
+                { subject: 'Features', A: 0, fullMark: 150 },
+                { subject: 'Bugs', A: 0, fullMark: 150 }
+            )
+        }
+
         const response: HealthMetrics = {
             totalTasks,
             completedTasks,
@@ -121,7 +164,9 @@ router.get("/team/:teamId", (req, res) => {
             topPerformers,
             statusBreakdown,
             workloadDistribution,
-            screenTime
+            screenTime,
+            trends,
+            categories
         }
 
         res.json(response)
