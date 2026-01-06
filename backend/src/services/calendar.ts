@@ -17,11 +17,17 @@ export interface CalendarEvent {
 }
 
 export async function getEvents(): Promise<CalendarEvent[]> {
+  // Optimization: Fetch only events from 6 months ago to 1 year in the future
+  // fetching from 1970 (epoch) is slow and likely hits the maxResults limit with old data.
+  const start = new Date()
+  start.setMonth(start.getMonth() - 6)
+
   const res = await calendar.events.list({
     calendarId: "primary",
     singleEvents: true,
     orderBy: "startTime",
-    timeMin: new Date(0).toISOString(),
+    timeMin: start.toISOString(),
+    maxResults: 2500, // Increase limit to capture all relevant events
   })
 
   return (res.data.items ?? []).map(e => ({
