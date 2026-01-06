@@ -1,0 +1,17 @@
+{
+    "name": "taskchain-cit",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "backend",
+        "frontend",
+        "contracts"
+    ],
+    "scripts": {
+        "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=backend\"",
+        "install:all": "npm install && npm install --workspaces"
+    },
+    "devDependencies": {
+        "concurrently": "^8.0.0"
+    }
+}

@@ -22,6 +22,8 @@ export interface OnChainTask {
 
 export async function getContract() {
   const { signer } = await connectWallet()
+  console.log(`Initializing contract with address: '${CONTRACT_ADDRESS}'`);
+  console.log(`Is valid address? ${ethers.isAddress(CONTRACT_ADDRESS)}`);
   return new ethers.Contract(CONTRACT_ADDRESS, (TaskChainArtifact as any).abi, signer)
 }
 
