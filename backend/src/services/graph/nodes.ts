@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 
 // Initialize LLM Lazily
 const getLlm = () => new ChatGoogleGenerativeAI({
-    model: "gemini-1.5-flash-001",
+    model: "gemini-2.5-flash",
     temperature: 0,
 });
 
@@ -22,40 +22,69 @@ export async function contextExtractor(state: typeof ProjectState.State) {
     const llm = getLlm();
 
     const prompt = `
-    Analyze the following message for new project entities (Nodes) or relationships (Edges).
-    
-    Entities can be: Feature, Bug, Decision, Document, Meeting.
-    Relationships can be: ROOT_CAUSE_OF, DEBATED_IN, DECIDED_IN, RELATED_TO.
+    You are a Knowledge Graph Extractor for a project management workspace. 
+    Your job is to extracted structured data from the following user message.
+
+    Extract the following types of Nodes (Entities):
+    - **Decision**: Any choice made (e.g., "Use React", "Approved design").
+    - **Feature**: Functionality linked to the project (e.g., "Dark Mode", "Chat").
+    - **Bug**: Problems mentioned (e.g., "Login failed").
+    - **Tech**: Tools/Libraries (e.g., "Next.js", "MongoDB").
+    - **Meeting**: Calendar events or discussions (e.g., "Daily Standup", "Client Call").
+    - **Person**: Team members mentioned.
+
+    Extract the following Edges (Relationships):
+    - **RELATES_TO**: General connection.
+    - **BLOCKED_BY**: Dependency.
+    - **SCHEDULED_FOR**: Linking a task/topic to a meeting.
     
     Message: "${lastMessage.content}"
     
-    Return ONLY a JSON object with keys "nodes" (array) and "edges" (array).
-    Example:
+    **RULES**:
+    1. If the message mentions a technical term, CREATE A NODE for it.
+    2. If the message implies a plan, CREATE A NODE for the Goal/Feature.
+    3. Return valid JSON only.
+    
+    Example Input: "We need to fix the login bug by tomorrow's meeting."
+    Example Output:
     {
-      "nodes": [{"id": "bug-123", "type": "Bug", "content": "Login failure"}],
-      "edges": [{"source": "bug-123", "target": "feature-auth", "type": "RELATED_TO"}]
+      "nodes": [
+        {"id": "bug-login", "type": "Bug", "content": "Login Bug"},
+        {"id": "meeting-tomorrow", "type": "Meeting", "content": "Tomorrow's Meeting"}
+      ],
+      "edges": [
+        {"source": "bug-login", "target": "meeting-tomorrow", "type": "SCHEDULED_FOR"}
+      ]
     }
   `;
 
     try {
         const result = await llm.invoke([new SystemMessage("You are a knowledge graph extractor."), new HumanMessage(prompt)]);
         const text = result.content.toString();
+        console.log("DEBUG: LLM Raw Output:", text);
 
         // Naive JSON parsing cleanup
         const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
         const data = JSON.parse(jsonStr);
+        console.log("DEBUG: Parsed Data:", JSON.stringify(data, null, 2));
 
         // Save to Mongo
         const { knowledgeNodes: nodesCol, knowledgeEdges: edgesCol } = await connectToMongo();
 
         if (data.nodes?.length) {
+            console.log(`DEBUG: Saving ${data.nodes.length} nodes...`);
             await Promise.all(data.nodes.map((n: any) =>
                 nodesCol.updateOne({ id: n.id }, { $set: n }, { upsert: true })
             ));
+        } else {
+            console.log("DEBUG: No nodes to save.");
         }
 
         if (data.edges?.length) {
+            console.log(`DEBUG: Saving ${data.edges.length} edges...`);
             await edgesCol.insertMany(data.edges);
+        } else {
+            console.log("DEBUG: No edges to save.");
         }
 
         return {
@@ -113,36 +142,81 @@ export async function jamboardTaskLinker(state: typeof ProjectState.State) {
 }
 
 export async function graphRetriever(state: typeof ProjectState.State) {
-    const query = state.intent; // e.g., "Find related docs to bug-123"
-    if (!query) return {};
+    const { knowledgeEdges: edgesCol, knowledgeNodes: nodesCol } = await connectToMongo();
 
-    const { knowledgeEdges: edgesCol } = await connectToMongo();
+    let startNodeId = state.intent;
 
-    // 1. Vector Search (Simulated for this code as we lack Atlas setup commands here)
-    // Ideally: 
-    // const initialNodes = await nodesCol.aggregate([ { $vectorSearch: ... } ]).toArray();
-    // using query to find a starting node.
+    // Handle generic search intent
+    if (startNodeId === "search" && state.knowledgeNodes.length > 0) {
+        startNodeId = state.knowledgeNodes[0].id;
+    }
 
-    // For implementation correctness with provided instructions, we will assume 
-    // we found a start node ID from the query string (e.g. if query is a node ID) 
-    // or usage of a simple find for this demo.
-    const startNodeId = query; // Simplified for demo
+    if (!startNodeId || startNodeId === "search") {
+        return { searchResults: { nodes: [], edges: [] } };
+    }
 
-    // 2. $graphLookup Aggregation
-    const result = await edgesCol.aggregate([
-        { $match: { source: startNodeId } },
+    console.log(`DEBUG: Graph search starting at node: ${startNodeId}`);
+
+    /**
+     * STEP 1: Traverse edges (bidirectional)
+     */
+    const edgeResults = await edgesCol.aggregate([
+        {
+            $match: {
+                $or: [
+                    { source: startNodeId },
+                    { target: startNodeId }
+                ]
+            }
+        },
         {
             $graphLookup: {
-                from: "knowledge_edges",
+                from: edgesCol.collectionName, // SAFER than hardcoding
                 startWith: "$target",
                 connectFromField: "target",
                 connectToField: "source",
-                as: "related_graph",
+                as: "related_edges",
                 maxDepth: 2,
                 depthField: "depth"
             }
         }
     ]).toArray();
 
-    return { searchResults: result };
+    if (!edgeResults.length) {
+        return { searchResults: { nodes: [], edges: [] } };
+    }
+
+    /**
+     * STEP 2: Collect all unique node IDs
+     */
+    const nodeIds = new Set<string>();
+    nodeIds.add(startNodeId);
+
+    const allEdges: any[] = [];
+
+    for (const doc of edgeResults) {
+        if (doc.source) nodeIds.add(doc.source);
+        if (doc.target) nodeIds.add(doc.target);
+        allEdges.push({ source: doc.source, target: doc.target, type: doc.type });
+
+        for (const e of doc.related_edges || []) {
+            nodeIds.add(e.source);
+            nodeIds.add(e.target);
+            allEdges.push({ source: e.source, target: e.target, type: e.type });
+        }
+    }
+
+    /**
+     * STEP 3: Fetch actual nodes
+     */
+    const nodes = await nodesCol.find({
+        id: { $in: Array.from(nodeIds) }
+    }).toArray();
+
+    return {
+        searchResults: {
+            nodes,
+            edges: allEdges
+        }
+    };
 }
