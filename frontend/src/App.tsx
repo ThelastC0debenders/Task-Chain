@@ -6,6 +6,7 @@ import TaskView from "./pages/taskview"
 import Receipt from "./pages/receipt"
 import LeaderDashboard from "./pages/leader-dashboard"
 import MemberDashboard from "./pages/member-dashboard"
+import UserProfile from "./pages/user-profile"
 import WorkDashboard from "./pages/work-dashboard"
 import ChatLayout from "./pages/chat-layout"
 import KanbanBoard from "./pages/kanban-board"
@@ -26,7 +27,8 @@ export default function App() {
           <Route path="/task" element={<TaskView />} />
           <Route path="/receipt" element={<Receipt />} />
           <Route path="/leader" element={<LeaderDashboard />} />
-          <Route path="/member" element={<MemberDashboard />} />
+          <Route path="/dashboard" element={<MemberDashboard />} />
+          <Route path="/profile/:address" element={<UserProfile />} />
           <Route path="/work" element={<WorkDashboard />} />
           <Route path="/invite" element={<MemberDashboard />} />
 

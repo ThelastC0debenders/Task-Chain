@@ -7,6 +7,7 @@ import { Monitor, Video, Code, MessageCircle, Trello, Calendar, FileText, Activi
 import type { ContributionReceipt } from "../types/receipt"
 import { generateReceipt } from "../utils/receiptGenerator"
 import { ContributionReceiptCard } from "../components/ContributionReceiptCard"
+import { SubmitProofModal } from "../components/SubmitProofModal"
 
 import { doc, onSnapshot } from "firebase/firestore"
 import { db } from "../services/firebase"
@@ -41,6 +42,7 @@ export default function MemberDashboard() {
   const [callState, setCallState] = useState<any>(null)
   const [dismissedCallId, setDismissedCallId] = useState<string | null>(null)
   const [receipt, setReceipt] = useState<ContributionReceipt | null>(null)
+  const [activeTaskForProof, setActiveTaskForProof] = useState<Task | null>(null)
 
 
   // listen to firestore pushes
@@ -217,31 +219,46 @@ export default function MemberDashboard() {
   }
 
   async function handleCompleteTask(taskId: string) {
+    const task = tasks.find(t => t.id === taskId)
+    if (task) {
+      setActiveTaskForProof(task)
+    }
+  }
+
+  async function handleSubmitProof(description: string, link: string) {
+    if (!activeTaskForProof) return
+    const taskId = activeTaskForProof.id
+
     try {
+      setLoading(true)
       const receiptHash =
         "0x" +
         Array.from(crypto.getRandomValues(new Uint8Array(32)))
           .map(b => b.toString(16).padStart(2, "0"))
           .join("")
-      const ipfsCid = "QmExample" + Date.now()
+
+      // Mock IPFS CID generation from proof content
+      const ipfsCid = "Qm" + btoa(JSON.stringify({ description, link })).slice(0, 44)
 
       await completeTaskOnChain(parseInt(taskId, 10), receiptHash, ipfsCid)
       await axios.patch(`${API}/task/${teamId}/${taskId}`, {
         status: "completed",
+        proof: { description, link, cid: ipfsCid }
       })
+
       setTasks(tasks.map(t => (t.id === taskId ? { ...t, status: "completed" } : t)))
       setClaimedTasks(claimedTasks.filter(id => id !== taskId))
 
       // Generate Receipt
-      const task = tasks.find(t => t.id === taskId)!
       const newReceipt = await generateReceipt(
         taskId,
-        task.title,
-        task.reward || "0 ETH",
+        activeTaskForProof.title,
+        activeTaskForProof.reward || "0 ETH",
         address,
         receiptHash
       )
       setReceipt(newReceipt)
+      setActiveTaskForProof(null)
 
       confetti({
         particleCount: 100,
@@ -249,10 +266,11 @@ export default function MemberDashboard() {
         origin: { y: 0.6 },
         colors: ['#7f5af0', '#14f195', '#00d9f5']
       })
-      // alert(`Task #${taskId} completed on-chain`)  <-- Removed alert to show receipt instead
     } catch (err: any) {
       console.error("Error completing task:", err)
       alert("Failed to complete task: " + (err.response?.data?.error || err.message))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -640,6 +658,16 @@ export default function MemberDashboard() {
           </div>
         </section>
       )}
+      {activeTaskForProof && (
+        <SubmitProofModal
+          taskId={activeTaskForProof.id}
+          taskTitle={activeTaskForProof.title}
+          onClose={() => setActiveTaskForProof(null)}
+          onSubmit={handleSubmitProof}
+          loading={loading}
+        />
+      )}
+
       {receipt && (
         <ContributionReceiptCard
           receipt={receipt}
