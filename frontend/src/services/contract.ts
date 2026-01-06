@@ -37,7 +37,7 @@ export async function createTaskOnChain(
   const contract = await getContract()
   const tx = await contract.createTask(metadataHash, category, deadline, gracePeriod, priority)
   const receipt = await tx.wait()
-  
+
   const event = receipt.logs.find((log: any) => {
     try {
       return contract.interface.parseLog(log)?.name === "TaskCreated"
@@ -45,12 +45,12 @@ export async function createTaskOnChain(
       return false
     }
   })
-  
+
   if (event) {
     const parsed = contract.interface.parseLog(event)
     return Number(parsed?.args[0])
   }
-  
+
   throw new Error("TaskCreated event not found")
 }
 
@@ -88,21 +88,21 @@ export function listenToTaskEvents(
   onTaskClaimed?: (taskId: number, executor: string, commitment: number) => void,
   onTaskCompleted?: (taskId: number, executor: string, creator: string) => void
 ) {
-  ;(async () => {
+  ; (async () => {
     const contract = await getContract()
-    
+
     if (onTaskCreated) {
       contract.on("TaskCreated", (taskId, creator, category, priority) => {
         onTaskCreated(Number(taskId), creator, category, priority)
       })
     }
-    
+
     if (onTaskClaimed) {
       contract.on("TaskClaimed", (taskId, executor, commitment) => {
         onTaskClaimed(Number(taskId), executor, commitment)
       })
     }
-    
+
     if (onTaskCompleted) {
       contract.on("TaskCompleted", (taskId, executor, creator) => {
         onTaskCompleted(Number(taskId), executor, creator)
@@ -120,7 +120,7 @@ export async function completeTask(contract: ethers.Contract, taskId: number, re
   const hash = receiptHash || "0x" + Array.from(crypto.getRandomValues(new Uint8Array(32)))
     .map(b => b.toString(16).padStart(2, '0')).join('')
   const cid = ipfsCid || "QmExample" + Date.now()
-  
+
   const tx = await contract.completeTask(taskId, hash, cid)
   await tx.wait()
 }

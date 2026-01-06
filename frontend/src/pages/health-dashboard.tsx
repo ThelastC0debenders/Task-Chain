@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts'
-import { Activity, Clock, Zap, AlertTriangle } from 'lucide-react'
+import { Activity, Clock, Zap, AlertTriangle, Sun, Moon } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext'
 
 // Theme Colors
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']
@@ -19,6 +20,7 @@ interface HealthMetrics {
 }
 
 const HealthDashboard = () => {
+    const { theme, toggleTheme } = useTheme()
     const [metrics, setMetrics] = useState<HealthMetrics | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -91,7 +93,7 @@ const HealthDashboard = () => {
             }
 
             // 4. Status Breakdown
-            if (!realData.statusBreakdown || realData.statusBreakdown.every(d => d.value === 0)) {
+            if (!realData.statusBreakdown || realData.statusBreakdown.every((d: { value: number }) => d.value === 0)) {
                 realData.statusBreakdown = [
                     { name: "Open", value: 12 },
                     { name: "Claimed", value: 12 },
@@ -141,25 +143,43 @@ const HealthDashboard = () => {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#0d1117',
-            color: '#c9d1d9',
+            background: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
             fontFamily: 'monospace',
             padding: 24,
             display: 'flex',
             flexDirection: 'column',
-            gap: 24
+            gap: 24,
+            transition: 'background 0.3s, color 0.3s'
         }}>
+
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #30363d', paddingBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: 16 }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: 24, color: '#00ff88', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <h1 style={{ margin: 0, fontSize: 24, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
                         <Activity /> TEAM HEALTH PROTOCOL
                     </h1>
-                    <span style={{ fontSize: 12, color: '#8b949e' }}>REAL-TIME PERFORMANCE & WELLBEING ANALYTICS</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>REAL-TIME PERFORMANCE & WELLBEING ANALYTICS</span>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 32, fontWeight: 'bold' }}>{metrics.totalTasks}</div>
-                    <div style={{ fontSize: 12, color: '#8b949e' }}>TOTAL OPERAIONS</div>
+                <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+                    <button
+                        onClick={toggleTheme}
+                        style={{
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-primary)',
+                            padding: 10,
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                    >
+                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 32, fontWeight: 'bold', color: 'var(--text-primary)' }}>{metrics.totalTasks}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>TOTAL OPERATIONS</div>
+                    </div>
                 </div>
             </div>
 
@@ -193,11 +213,11 @@ const HealthDashboard = () => {
                                 paddingAngle={5}
                                 dataKey="value"
                             >
-                                {metrics.workloadDistribution.map((entry, index) => (
+                                {metrics.workloadDistribution.map((_, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={{ background: '#161b22', border: '1px solid #30363d' }} />
+                            <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 8 }} />
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
@@ -207,10 +227,10 @@ const HealthDashboard = () => {
                 <ChartContainer title="TASK STATUS">
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={metrics.statusBreakdown}>
-                            <XAxis dataKey="name" stroke="#8b949e" />
-                            <YAxis stroke="#8b949e" />
-                            <Tooltip contentStyle={{ background: '#161b22', border: '1px solid #30363d' }} />
-                            <Bar dataKey="value" name="Tasks" fill="#00ff88" radius={[4, 4, 0, 0]} />
+                            <XAxis dataKey="name" stroke="var(--text-tertiary)" />
+                            <YAxis stroke="var(--text-tertiary)" />
+                            <Tooltip cursor={{ fill: 'var(--bg-tertiary)' }} contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 8 }} />
+                            <Bar dataKey="value" name="Tasks" fill="var(--accent-primary)" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </ChartContainer>
@@ -227,10 +247,10 @@ const HealthDashboard = () => {
                                     <stop offset="95%" stopColor="#00ff88" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <XAxis dataKey="day" stroke="#8b949e" />
-                            <YAxis stroke="#8b949e" />
-                            <Tooltip contentStyle={{ background: '#161b22', border: '1px solid #30363d' }} />
-                            <Area type="monotone" dataKey="completed" stroke="#00ff88" fillOpacity={1} fill="url(#colorCompleted)" />
+                            <XAxis dataKey="day" stroke="var(--text-tertiary)" />
+                            <YAxis stroke="var(--text-tertiary)" />
+                            <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 8 }} />
+                            <Area type="monotone" dataKey="completed" stroke="var(--accent-primary)" fillOpacity={1} fill="url(#colorCompleted)" />
                             <Area type="monotone" dataKey="added" stroke="#8884d8" fill="transparent" />
                         </AreaChart>
                     </ResponsiveContainer>
@@ -239,8 +259,8 @@ const HealthDashboard = () => {
                 <ChartContainer title="SKILL MATRIX">
                     <ResponsiveContainer width="100%" height={250}>
                         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={(metrics as any).categories}>
-                            <PolarGrid stroke="#30363d" />
-                            <PolarAngleAxis dataKey="subject" stroke="#8b949e" style={{ fontSize: 10 }} />
+                            <PolarGrid stroke="var(--border-color)" />
+                            <PolarAngleAxis dataKey="subject" stroke="var(--text-tertiary)" style={{ fontSize: 10 }} />
                             <PolarRadiusAxis angle={30} domain={[0, 150]} stroke="transparent" />
                             <Radar name="Team" dataKey="A" stroke="#FFBB28" fill="#FFBB28" fillOpacity={0.6} />
                         </RadarChart>
@@ -252,9 +272,9 @@ const HealthDashboard = () => {
             <ChartContainer title="DIGITAL WELLBEING (ESTIMATED SCREEN TIME)">
                 <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={metrics.screenTime} layout="vertical">
-                        <XAxis type="number" stroke="#8b949e" />
-                        <YAxis dataKey="user" type="category" stroke="#8b949e" width={100} />
-                        <Tooltip contentStyle={{ background: '#161b22', border: '1px solid #30363d' }} />
+                        <XAxis type="number" stroke="var(--text-tertiary)" />
+                        <YAxis dataKey="user" type="category" stroke="var(--text-tertiary)" width={100} />
+                        <Tooltip cursor={{ fill: 'var(--bg-tertiary)' }} contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 8 }} />
                         <Bar dataKey="hours" fill="#8884d8" radius={[0, 4, 4, 0]}>
                             {metrics.screenTime.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={metrics.burnoutRiskUsers.includes(entry.user) ? '#FF8042' : '#8884d8'} />
@@ -265,19 +285,19 @@ const HealthDashboard = () => {
             </ChartContainer>
 
             {/* Top Performers */}
-            <div style={{ background: '#161b22', padding: 20, borderRadius: 8, border: '1px solid #30363d' }}>
-                <h3 style={{ margin: '0 0 16px', color: '#8b949e', fontSize: 14 }}>TOP PERFORMERS (POWER SCORE) 🏆</h3>
+            <div style={{ background: 'var(--bg-secondary)', padding: 20, borderRadius: 8, border: '1px solid var(--border-color)' }}>
+                <h3 style={{ margin: '0 0 16px', color: 'var(--text-tertiary)', fontSize: 14 }}>TOP PERFORMERS (POWER SCORE) 🏆</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {metrics.topPerformers.map((p, i) => (
-                        <div key={p.user} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: 4 }}>
+                        <div key={p.user} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px', background: 'var(--bg-tertiary)', borderRadius: 4 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <span style={{ fontWeight: 'bold', color: i === 0 ? '#FFBB28' : '#c9d1d9' }}>#{i + 1}</span>
-                                <span>{p.user}</span>
+                                <span style={{ fontWeight: 'bold', color: i === 0 ? '#FFBB28' : 'var(--text-primary)' }}>#{i + 1}</span>
+                                <span style={{ color: 'var(--text-primary)' }}>{p.user}</span>
                             </div>
-                            <div style={{ fontWeight: 'bold', color: '#00ff88' }}>{p.score} pts</div>
+                            <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{p.score} pts</div>
                         </div>
                     ))}
-                    {metrics.topPerformers.length === 0 && <div style={{ color: '#8b949e', fontStyle: 'italic' }}>No data yet</div>}
+                    {metrics.topPerformers.length === 0 && <div style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No data yet</div>}
                 </div>
             </div>
 
@@ -288,26 +308,26 @@ const HealthDashboard = () => {
 // Helpers
 const KpiCard = ({ icon: Icon, title, value, sub, color, isAlert }: any) => (
     <div style={{
-        background: '#161b22',
+        background: 'var(--bg-secondary)',
         padding: 20,
         borderRadius: 8,
-        border: isAlert ? `1px solid ${color}` : '1px solid #30363d',
+        border: isAlert ? `1px solid ${color}` : '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
         gap: 8
     }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#8b949e', fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-tertiary)', fontSize: 12 }}>
             {title}
             <Icon size={16} color={color} />
         </div>
-        <div style={{ fontSize: 24, fontWeight: 'bold', color: isAlert ? color : '#c9d1d9' }}>{value}</div>
-        <div style={{ fontSize: 12, color: isAlert ? color : '#8b949e' }}>{sub}</div>
+        <div style={{ fontSize: 24, fontWeight: 'bold', color: isAlert ? color : 'var(--text-primary)' }}>{value}</div>
+        <div style={{ fontSize: 12, color: isAlert ? color : 'var(--text-tertiary)' }}>{sub}</div>
     </div>
 )
 
 const ChartContainer = ({ title, children }: any) => (
-    <div style={{ background: '#161b22', padding: 20, borderRadius: 8, border: '1px solid #30363d' }}>
-        <h3 style={{ margin: '0 0 16px', color: '#8b949e', fontSize: 14 }}>{title}</h3>
+    <div style={{ background: 'var(--bg-secondary)', padding: 20, borderRadius: 8, border: '1px solid var(--border-color)' }}>
+        <h3 style={{ margin: '0 0 16px', color: 'var(--text-tertiary)', fontSize: 14 }}>{title}</h3>
         {children}
     </div>
 )
