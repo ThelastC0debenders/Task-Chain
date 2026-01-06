@@ -3,8 +3,10 @@ import { socket } from "../services/socket"
 import {
     MousePointer, Pen, Eraser, StickyNote, Image as ImageIcon,
     Circle, Type, MoreVertical, ChevronLeft, ChevronRight,
-    Undo, Redo, ZoomIn, Download, Trash2, Check, Plus
+    Undo, Redo, ZoomIn, Download, Trash2, Check, Plus,
+    Sparkles, Loader
 } from "lucide-react"
+import axios from "axios"
 
 // --- Types ---
 type Tool = 'select' | 'pen' | 'eraser' | 'shape' | 'text' | 'note' | 'image'
@@ -41,7 +43,7 @@ interface HistoryState {
 // Throttle helper
 const throttle = (func: Function, limit: number) => {
     let inThrottle: boolean
-    return function(this: any, ...args: any[]) {
+    return function (this: any, ...args: any[]) {
         if (!inThrottle) {
             func.apply(this, args)
             inThrottle = true
@@ -59,14 +61,14 @@ const Whiteboard = () => {
     const [strokeWidth, setStrokeWidth] = useState(2)
     const [eraserWidth, setEraserWidth] = useState(20)
     const [objects, setObjects] = useState<BoardObject[]>([])
-    
+
     // UI State
     const [showPenMenu, setShowPenMenu] = useState(false)
     const [showEraserMenu, setShowEraserMenu] = useState(false)
     const [showShapeMenu, setShowShapeMenu] = useState(false)
     const [showStickyModal, setShowStickyModal] = useState(false)
     const [zoom, setZoom] = useState<number>(1)
-    
+
     // Sticky Modal State
     const [stickyColor, setStickyColor] = useState('#fff740')
     const [stickyText, setStickyText] = useState('')
@@ -74,6 +76,11 @@ const Whiteboard = () => {
     // History State
     const [history, setHistory] = useState<HistoryState[]>([])
     const [future, setFuture] = useState<HistoryState[]>([])
+
+    // Analysis State
+    const [isAnalyzing, setIsAnalyzing] = useState(false)
+    const [analysisResult, setAnalysisResult] = useState<any>(null)
+    const [showAnalysisModal, setShowAnalysisModal] = useState(false)
 
     // Refs
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -100,13 +107,13 @@ const Whiteboard = () => {
         const savedObjects = localStorage.getItem(`${wbId}-objects`)
         const savedImage = localStorage.getItem(`${wbId}-image`)
         if (savedObjects) setObjects(JSON.parse(savedObjects))
-        
+
         const resize = () => {
             if (containerRef.current && canvasRef.current) {
                 const { clientWidth, clientHeight } = containerRef.current
                 canvasRef.current.width = clientWidth
                 canvasRef.current.height = clientHeight
-                
+
                 // Restore Context
                 const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true })
                 if (ctx) {
@@ -171,14 +178,14 @@ const Whiteboard = () => {
         if (!canvasRef.current) return
         const ctx = canvasRef.current.getContext('2d')
         if (!ctx) return
-        
+
         const imageData = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height)
-        
+
         const currentState: HistoryState = {
             objects: JSON.parse(JSON.stringify(objects)), // Deep copy to prevent mutation reference
             imageData: imageData
         }
-        
+
         setHistory(prev => {
             const newHistory = [...prev, currentState]
             if (newHistory.length > 20) newHistory.shift() // Limit stack size
@@ -189,7 +196,7 @@ const Whiteboard = () => {
 
     const undo = () => {
         if (history.length === 0 || !canvasRef.current) return
-        
+
         const previousState = history[history.length - 1]
         const ctx = canvasRef.current.getContext('2d')
         if (!ctx) return
@@ -203,9 +210,9 @@ const Whiteboard = () => {
 
         // 2. Restore PREVIOUS state
         if (previousState.imageData) {
-             ctx.putImageData(previousState.imageData, 0, 0)
+            ctx.putImageData(previousState.imageData, 0, 0)
         } else {
-             ctx.clearRect(0,0, canvasRef.current.width, canvasRef.current.height)
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
         }
         setObjects(previousState.objects)
 
@@ -215,7 +222,7 @@ const Whiteboard = () => {
 
     const redo = () => {
         if (future.length === 0 || !canvasRef.current) return
-        
+
         const nextState = future[future.length - 1]
         const ctx = canvasRef.current.getContext('2d')
         if (!ctx) return
@@ -236,15 +243,15 @@ const Whiteboard = () => {
         // 3. Remove used state from future
         setFuture(prev => prev.slice(0, -1))
     }
-    
+
     const handleClearBoard = () => {
-         saveCheckpoint()
-         setObjects([])
-         const ctx = canvasRef.current?.getContext('2d')
-         if (ctx && canvasRef.current) {
-             ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
-         }
-         saveCanvas()
+        saveCheckpoint()
+        setObjects([])
+        const ctx = canvasRef.current?.getContext('2d')
+        if (ctx && canvasRef.current) {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+        }
+        saveCanvas()
     }
 
     const cycleZoom = () => {
@@ -254,13 +261,79 @@ const Whiteboard = () => {
         setZoom(levels[nextIndex])
     }
 
+    const handleAnalyze = async () => {
+        if (!canvasRef.current) return
+        setIsAnalyzing(true)
+        try {
+            // Generate Composite Image (Background + Drawings + Objects)
+            const canvas = canvasRef.current
+            const tempCanvas = document.createElement('canvas')
+            tempCanvas.width = canvas.width
+            tempCanvas.height = canvas.height
+            const ctx = tempCanvas.getContext('2d')
+            if (!ctx) throw new Error("Could not create context")
+
+            // 1. Draw White Background
+            ctx.fillStyle = '#ffffff'
+            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+
+            // 2. Draw Drawings
+            ctx.drawImage(canvas, 0, 0)
+
+            // 3. Draw Objects
+            ctx.font = '24px sans-serif'
+            await Promise.all(objects.map(async (obj) => {
+                ctx.save()
+                ctx.translate(obj.x, obj.y)
+
+                if (obj.type === 'note') {
+                    ctx.fillStyle = obj.color || '#fff740'
+                    ctx.shadowColor = 'rgba(0,0,0,0.2)'
+                    ctx.shadowBlur = 4
+                    ctx.fillRect(0, 0, 200, 200)
+                    ctx.shadowBlur = 0
+                    ctx.fillStyle = '#000'
+                    ctx.font = '20px Caveat'
+                    wrapText(ctx, obj.content || '', 20, 40, 160, 24)
+                } else if (obj.type === 'image' && obj.content) {
+                    const img = new Image()
+                    img.src = obj.content
+                    await new Promise((resolve) => {
+                        img.onload = resolve
+                        img.onerror = resolve
+                    })
+                    ctx.drawImage(img, 0, 0, obj.width || 100, obj.height || 100)
+                } else if (obj.type === 'text') {
+                    ctx.fillStyle = obj.color || 'black'
+                    ctx.font = '32px sans-serif'
+                    ctx.fillText(obj.content || '', 0, 32)
+                } else if (obj.type === 'shape') {
+                    drawShapeOnContext(ctx, obj)
+                }
+
+                ctx.restore()
+            }))
+
+            const image = tempCanvas.toDataURL("image/png")
+
+            const res = await axios.post("/api/graph/analyze-whiteboard", { image })
+            setAnalysisResult(res.data)
+            setShowAnalysisModal(true)
+        } catch (e: any) {
+            console.error("Analysis failed", e)
+            alert("AI Analysis failed: " + (e.response?.data?.error || e.message))
+        } finally {
+            setIsAnalyzing(false)
+        }
+    }
+
     // --- Tool Actions ---
     const triggerImageUpload = () => fileInputRef.current?.click()
-    
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
-        
+
         saveCheckpoint() // Save before adding
         const reader = new FileReader()
         reader.onload = (ev) => {
@@ -292,7 +365,7 @@ const Whiteboard = () => {
         setShowStickyModal(false)
         setTool('select')
     }
-    
+
     const addShape = (shape: ShapeType) => {
         saveCheckpoint() // Save before adding
         const id = Date.now().toString()
@@ -328,7 +401,7 @@ const Whiteboard = () => {
         // 1. Draw Background
         ctx.fillStyle = '#ffffff'
         ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
-        
+
         // 2. Draw Drawings
         ctx.drawImage(canvas, 0, 0)
 
@@ -337,7 +410,7 @@ const Whiteboard = () => {
         objects.forEach(obj => {
             ctx.save()
             ctx.translate(obj.x, obj.y)
-            
+
             if (obj.type === 'note') {
                 ctx.fillStyle = obj.color || '#fff740'
                 ctx.shadowColor = 'rgba(0,0,0,0.2)'
@@ -348,15 +421,15 @@ const Whiteboard = () => {
                 ctx.font = '20px Caveat'
                 wrapText(ctx, obj.content || '', 20, 40, 160, 24)
             } else if (obj.type === 'image' && obj.content) {
-                 const img = new Image()
-                 img.src = obj.content
-                 ctx.drawImage(img, 0, 0, obj.width || 100, obj.height || 100)
+                const img = new Image()
+                img.src = obj.content
+                ctx.drawImage(img, 0, 0, obj.width || 100, obj.height || 100)
             } else if (obj.type === 'text') {
                 ctx.fillStyle = obj.color || 'black'
                 ctx.font = '32px sans-serif'
                 ctx.fillText(obj.content || '', 0, 32)
             } else if (obj.type === 'shape') {
-                 drawShapeOnContext(ctx, obj)
+                drawShapeOnContext(ctx, obj)
             }
 
             ctx.restore()
@@ -383,18 +456,18 @@ const Whiteboard = () => {
         if (!canvasRef.current) return { x: 0, y: 0 }
         const rect = canvasRef.current.getBoundingClientRect()
         // Adjust for Zoom
-        return { 
-            x: (e.clientX - rect.left) / zoom, 
-            y: (e.clientY - rect.top) / zoom 
+        return {
+            x: (e.clientX - rect.left) / zoom,
+            y: (e.clientY - rect.top) / zoom
         }
     }
 
     const handlePointerDown = (e: React.PointerEvent) => {
         if (tool === 'select') return
         e.currentTarget.setPointerCapture(e.pointerId)
-        
+
         saveCheckpoint() // Save state before starting a stroke
-        
+
         setIsDrawing(true)
         const { x, y } = getPos(e)
         lastPos.current = { x, y }
@@ -417,18 +490,18 @@ const Whiteboard = () => {
     }
 
     const emitDraw = useCallback(throttle((wbId: string, segment: DrawElement) => {
-         socket.emit("draw", { wbId, elements: segment })
+        socket.emit("draw", { wbId, elements: segment })
     }, 20), [])
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDrawing) return
-        const { x, y } = getPos(e) 
-        
+        const { x, y } = getPos(e)
+
         if (!lastPos.current) return
-        
+
         const s = brushSettings[brushType]
         const currentWidth = tool === 'eraser' ? eraserWidth : s.width
-        
+
         const segment: DrawElement = {
             type: 'line',
             x0: lastPos.current.x, y0: lastPos.current.y,
@@ -480,7 +553,7 @@ const Whiteboard = () => {
                     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}
             >
-                <Icon size={20} style={{stroke: active && tool === 'eraser' ? '#1967d2' : undefined}}/>
+                <Icon size={20} style={{ stroke: active && tool === 'eraser' ? '#1967d2' : undefined }} />
             </button>
             {hasMore && <div style={{ position: 'absolute', right: 2, bottom: 2, fontSize: 8, color: '#5f6368' }}>▶</div>}
             {active && <div style={{ position: 'absolute', left: -4, top: '50%', transform: 'translateY(-50%)', width: 3, height: 20, background: '#1967d2', borderRadius: '0 2px 2px 0' }} />}
@@ -489,12 +562,12 @@ const Whiteboard = () => {
 
     return (
         <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: '#f8f9fa', fontFamily: 'Roboto, Arial, sans-serif' }}>
-            
+
             {/* Top Bar */}
             <div style={styles.topBar}>
                 <div style={styles.topLeft}>
                     <div style={styles.logo}>
-                         <div style={{color: 'white', fontWeight: 'bold', fontSize: 24}}>J</div>
+                        <div style={{ color: 'white', fontWeight: 'bold', fontSize: 24 }}>J</div>
                     </div>
                     <div style={styles.titleGroup}>
                         <div style={styles.docTitle}>Untitled Jam</div>
@@ -503,7 +576,7 @@ const Whiteboard = () => {
 
                 <div style={styles.topCenter}>
                     {/* Pagination omitted for brevity, logic exists */}
-                     <div style={styles.pagination}>
+                    <div style={styles.pagination}>
                         <button style={styles.pageBtn}><ChevronLeft size={16} /></button>
                         <div style={styles.pageIndicator}>1 / 1</div>
                         <button style={styles.pageBtn}><ChevronRight size={16} /></button>
@@ -511,20 +584,30 @@ const Whiteboard = () => {
                 </div>
 
                 <div style={styles.topRight}>
-                    <button style={{...styles.iconBtn, opacity: history.length ? 1 : 0.3}} onClick={undo} disabled={history.length===0}><Undo size={20} /></button>
-                    <button style={{...styles.iconBtn, opacity: future.length ? 1 : 0.3}} onClick={redo} disabled={future.length===0}><Redo size={20} /></button>
+                    <button style={{ ...styles.iconBtn, opacity: history.length ? 1 : 0.3 }} onClick={undo} disabled={history.length === 0}><Undo size={20} /></button>
+                    <button style={{ ...styles.iconBtn, opacity: future.length ? 1 : 0.3 }} onClick={redo} disabled={future.length === 0}><Redo size={20} /></button>
                     <button style={styles.iconBtn} onClick={cycleZoom}>
-                        <ZoomIn size={20} style={{marginRight: 4}} />
-                        <span style={{fontSize: 12}}>{Math.round(zoom * 100)}%</span>
+                        <ZoomIn size={20} style={{ marginRight: 4 }} />
+                        <span style={{ fontSize: 12 }}>{Math.round(zoom * 100)}%</span>
                     </button>
                     <div style={styles.separator} />
-                    <button style={{...styles.shareBtn, background: '#fff', color: '#3c4043', border: '1px solid #dadce0'}} onClick={downloadBoard}>
-                        <Download size={16} style={{marginRight: 8}} />
+                    <button style={{ ...styles.shareBtn, background: '#fff', color: '#3c4043', border: '1px solid #dadce0' }} onClick={downloadBoard}>
+                        <Download size={16} style={{ marginRight: 8 }} />
                         Download
                     </button>
-                    <button style={{...styles.shareBtn, marginLeft: 12}}>
-                        <Check size={16} style={{marginRight: 8}} />
+                    <button style={{ ...styles.shareBtn, marginLeft: 12 }}>
+                        <Check size={16} style={{ marginRight: 8 }} />
                         Save
+                    </button>
+                    {/* AI Analyze Button */}
+                    <button style={{ ...styles.shareBtn, marginLeft: 12, background: 'linear-gradient(135deg, #8e24aa, #ba68c8)' }} onClick={handleAnalyze} disabled={isAnalyzing}>
+                        {isAnalyzing ? <Loader size={16} style={{ marginRight: 8, animation: 'spin 1s linear infinite' }} /> : <Sparkles size={16} style={{ marginRight: 8 }} />}
+                        {isAnalyzing ? "Analyzing..." : "AI Analyze"}
+                    </button>
+                    {/* AI Analyze Button */}
+                    <button style={{ ...styles.shareBtn, marginLeft: 12, background: 'linear-gradient(135deg, #8e24aa, #ba68c8)' }} onClick={handleAnalyze} disabled={isAnalyzing}>
+                        {isAnalyzing ? <Loader size={16} style={{ marginRight: 8, animation: 'spin 1s linear infinite' }} /> : <Sparkles size={16} style={{ marginRight: 8 }} />}
+                        {isAnalyzing ? "Analyzing..." : "AI Analyze"}
                     </button>
                 </div>
             </div>
@@ -533,30 +616,30 @@ const Whiteboard = () => {
             <div style={styles.workspace}>
                 {/* Left Toolbar */}
                 <div style={styles.toolbar}>
-                    <ToolbarTool active={tool === 'pen'} icon={Pen} onClick={() => { if(tool==='pen') setShowPenMenu(!showPenMenu); else { setTool('pen'); setShowPenMenu(true); setShowEraserMenu(false); }}} hasMore />
-                    <ToolbarTool active={tool === 'eraser'} icon={Eraser} onClick={() => { if(tool==='eraser') setShowEraserMenu(!showEraserMenu); else { setTool('eraser'); setShowEraserMenu(true); setShowPenMenu(false); }}} hasMore />
+                    <ToolbarTool active={tool === 'pen'} icon={Pen} onClick={() => { if (tool === 'pen') setShowPenMenu(!showPenMenu); else { setTool('pen'); setShowPenMenu(true); setShowEraserMenu(false); } }} hasMore />
+                    <ToolbarTool active={tool === 'eraser'} icon={Eraser} onClick={() => { if (tool === 'eraser') setShowEraserMenu(!showEraserMenu); else { setTool('eraser'); setShowEraserMenu(true); setShowPenMenu(false); } }} hasMore />
                     <ToolbarTool active={tool === 'select'} icon={MousePointer} onClick={() => setTool('select')} />
                     <ToolbarTool active={tool === 'note'} icon={StickyNote} onClick={openStickyModal} />
                     <ToolbarTool active={tool === 'image'} icon={ImageIcon} onClick={triggerImageUpload} />
-                    <ToolbarTool active={tool === 'shape'} icon={Circle} onClick={() => { if(tool==='shape') setShowShapeMenu(!showShapeMenu); else { setTool('shape'); setShowShapeMenu(true) }}} hasMore />
+                    <ToolbarTool active={tool === 'shape'} icon={Circle} onClick={() => { if (tool === 'shape') setShowShapeMenu(!showShapeMenu); else { setTool('shape'); setShowShapeMenu(true) } }} hasMore />
                     <ToolbarTool active={tool === 'text'} icon={Type} onClick={addTextBox} />
                     {/* Trash Button */}
-                    <div style={{height: 1, background: '#dadce0', width: 20, alignSelf: 'center', margin: '4px 0'}} />
+                    <div style={{ height: 1, background: '#dadce0', width: 20, alignSelf: 'center', margin: '4px 0' }} />
                     <ToolbarTool active={false} icon={Trash2} onClick={handleClearBoard} isDangerous />
                 </div>
-                
+
                 {/* Hidden File Input */}
-                <input ref={fileInputRef} type="file" accept="image/*" style={{display: 'none'}} onChange={handleImageUpload} />
+                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
 
                 {/* Pen Menu */}
                 {showPenMenu && tool === 'pen' && (
                     <div style={styles.popupMenu}>
                         <div style={styles.brushRow}>
                             {(['pen', 'marker', 'highlighter', 'brush'] as BrushType[]).map(t => (
-                                <div key={t} onClick={() => setBrushType(t)} style={{...styles.brushBtn, background: brushType === t ? '#e8f0fe' : 'transparent'}}>
+                                <div key={t} onClick={() => setBrushType(t)} style={{ ...styles.brushBtn, background: brushType === t ? '#e8f0fe' : 'transparent' }}>
                                     <div style={{
-                                        width: '80%', height: t==='pen'?2 : t==='marker'?4 : t==='highlighter'?10 : 5, 
-                                        background: color, borderRadius: 2, opacity: t==='highlighter'?0.4 : t==='brush'?0.6 : 1,
+                                        width: '80%', height: t === 'pen' ? 2 : t === 'marker' ? 4 : t === 'highlighter' ? 10 : 5,
+                                        background: color, borderRadius: 2, opacity: t === 'highlighter' ? 0.4 : t === 'brush' ? 0.6 : 1,
                                         transform: 'rotate(-45deg)'
                                     }} />
                                 </div>
@@ -568,17 +651,17 @@ const Whiteboard = () => {
                                     ...styles.colorBtn, background: c,
                                     border: color === c ? '2px solid #1a73e8' : '2px solid transparent'
                                 }}>
-                                    {color === c && <div style={{width: 6, height: 6, background: c==='#ffffff'?'#000':'#fff', borderRadius: '50%'}} />}
+                                    {color === c && <div style={{ width: 6, height: 6, background: c === '#ffffff' ? '#000' : '#fff', borderRadius: '50%' }} />}
                                 </div>
                             ))}
                             {/* Custom Color Picker */}
-                            <label style={{...styles.colorBtn, border: '2px solid #dadce0', position: 'relative', overflow: 'hidden'}}>
+                            <label style={{ ...styles.colorBtn, border: '2px solid #dadce0', position: 'relative', overflow: 'hidden' }}>
                                 <Plus size={16} />
-                                <input 
-                                    type="color" 
-                                    value={color} 
+                                <input
+                                    type="color"
+                                    value={color}
                                     onChange={(e) => { setColor(e.target.value); setShowPenMenu(true); }} // Keep menu open
-                                    style={{position: 'absolute', top:0, left:0, width:'130%', height:'130%', cursor: 'pointer', opacity: 0}} 
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '130%', height: '130%', cursor: 'pointer', opacity: 0 }}
                                 />
                             </label>
                         </div>
@@ -587,44 +670,44 @@ const Whiteboard = () => {
 
                 {/* Eraser Menu */}
                 {showEraserMenu && tool === 'eraser' && (
-                    <div style={{...styles.popupMenu, top: '30%'}}>
-                         <div style={{display: 'flex', gap: 12, alignItems: 'center'}}>
+                    <div style={{ ...styles.popupMenu, top: '30%' }}>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                             {eraserSizes.map(size => (
                                 <div key={size} onClick={() => setEraserWidth(size)} style={{
-                                    ...styles.brushBtn, 
+                                    ...styles.brushBtn,
                                     background: eraserWidth === size ? '#e8f0fe' : 'transparent',
                                     border: eraserWidth === size ? '1px solid #1a73e8' : '1px solid transparent'
                                 }}>
                                     <div style={{
-                                        width: size/2, height: size/2, 
+                                        width: size / 2, height: size / 2,
                                         background: '#5f6368', borderRadius: '50%'
                                     }} />
                                 </div>
                             ))}
-                         </div>
+                        </div>
                     </div>
                 )}
 
                 {showShapeMenu && (
-                    <div style={{...styles.popupMenu, top: 320}}>
-                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8}}>
-                            <div onClick={() => addShape('circle')} style={styles.shapeBtn}><div style={{width: 20, height: 20, border: '2px solid #5f6368', borderRadius: '50%'}} /></div>
-                            <div onClick={() => addShape('square')} style={styles.shapeBtn}><div style={{width: 20, height: 20, border: '2px solid #5f6368'}} /></div>
-                            <div onClick={() => addShape('triangle')} style={styles.shapeBtn}><div style={{width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '20px solid #5f6368'}} /></div>
-                            <div onClick={() => addShape('diamond')} style={styles.shapeBtn}><div style={{width: 16, height: 16, border: '2px solid #5f6368', transform: 'rotate(45deg)'}} /></div>
-                            <div onClick={() => addShape('rounded_rect')} style={styles.shapeBtn}><div style={{width: 20, height: 16, border: '2px solid #5f6368', borderRadius: 4}} /></div>
-                            <div onClick={() => addShape('half_circle')} style={styles.shapeBtn}><div style={{width: 20, height: 10, border: '2px solid #5f6368', borderRadius: '20px 20px 0 0', borderBottom: 'none'}} /></div>
-                            <div onClick={() => addShape('bar')} style={styles.shapeBtn}><div style={{width: 20, height: 12, border: '2px solid #5f6368', borderRadius: 2}} /></div>
-                            <div onClick={() => addShape('arrow')} style={styles.shapeBtn}><div style={{width:20, height: 20, display: 'flex', alignItems: 'center'}}><div style={{width: 12, height: 2, background: '#5f6368'}} /><div style={{width: 0, height: 0, borderLeft: '6px solid #5f6368', borderTop: '4px solid transparent', borderBottom: '4px solid transparent'}} /></div></div>
+                    <div style={{ ...styles.popupMenu, top: 320 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                            <div onClick={() => addShape('circle')} style={styles.shapeBtn}><div style={{ width: 20, height: 20, border: '2px solid #5f6368', borderRadius: '50%' }} /></div>
+                            <div onClick={() => addShape('square')} style={styles.shapeBtn}><div style={{ width: 20, height: 20, border: '2px solid #5f6368' }} /></div>
+                            <div onClick={() => addShape('triangle')} style={styles.shapeBtn}><div style={{ width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '20px solid #5f6368' }} /></div>
+                            <div onClick={() => addShape('diamond')} style={styles.shapeBtn}><div style={{ width: 16, height: 16, border: '2px solid #5f6368', transform: 'rotate(45deg)' }} /></div>
+                            <div onClick={() => addShape('rounded_rect')} style={styles.shapeBtn}><div style={{ width: 20, height: 16, border: '2px solid #5f6368', borderRadius: 4 }} /></div>
+                            <div onClick={() => addShape('half_circle')} style={styles.shapeBtn}><div style={{ width: 20, height: 10, border: '2px solid #5f6368', borderRadius: '20px 20px 0 0', borderBottom: 'none' }} /></div>
+                            <div onClick={() => addShape('bar')} style={styles.shapeBtn}><div style={{ width: 20, height: 12, border: '2px solid #5f6368', borderRadius: 2 }} /></div>
+                            <div onClick={() => addShape('arrow')} style={styles.shapeBtn}><div style={{ width: 20, height: 20, display: 'flex', alignItems: 'center' }}><div style={{ width: 12, height: 2, background: '#5f6368' }} /><div style={{ width: 0, height: 0, borderLeft: '6px solid #5f6368', borderTop: '4px solid transparent', borderBottom: '4px solid transparent' }} /></div></div>
                         </div>
                     </div>
                 )}
-                
+
                 {/* Sticky Note Modal */}
                 {showStickyModal && (
                     <div style={styles.modalOverlay}>
-                        <div style={{...styles.modalContent, background: stickyColor}}>
-                            <textarea 
+                        <div style={{ ...styles.modalContent, background: stickyColor }}>
+                            <textarea
                                 autoFocus
                                 value={stickyText}
                                 onChange={(e) => setStickyText(e.target.value)}
@@ -640,9 +723,9 @@ const Whiteboard = () => {
                                         }} />
                                     ))}
                                 </div>
-                                <div style={{display: 'flex', gap: 12}}>
-                                    <button onClick={() => setShowStickyModal(false)} style={{background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 500}}>Cancel</button>
-                                    <button onClick={confirmStickyNote} style={{background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 500, color: '#1967d2'}}>Save</button>
+                                <div style={{ display: 'flex', gap: 12 }}>
+                                    <button onClick={() => setShowStickyModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Cancel</button>
+                                    <button onClick={confirmStickyNote} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 500, color: '#1967d2' }}>Save</button>
                                 </div>
                             </div>
                         </div>
@@ -650,27 +733,59 @@ const Whiteboard = () => {
                 )}
 
                 {/* Canvas Area */}
-                <div ref={containerRef} style={{...styles.canvasArea, overflow: 'hidden'}}>
+                <div ref={containerRef} style={{ ...styles.canvasArea, overflow: 'hidden' }}>
                     <div style={{
                         width: '100%', height: '100%', position: 'relative',
                         transform: `scale(${zoom})`, transformOrigin: 'top left',
                         transition: 'transform 0.2s ease-out'
                     }}>
-                         <canvas ref={canvasRef} style={{...styles.canvas, touchAction: 'none'}}
+                        <canvas ref={canvasRef} style={{ ...styles.canvas, touchAction: 'none' }}
                             onPointerDown={handlePointerDown}
                             onPointerMove={handlePointerMove}
                             onPointerUp={handlePointerUp}
-                         />
-                         
-                         {/* Objects Layer */}
-                         <div style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: tool === 'select' ? 'auto' : 'none'}}>
+                        />
+
+                        {/* Objects Layer */}
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: tool === 'select' ? 'auto' : 'none' }}>
                             {objects.map(obj => (
                                 <DraggableObject key={obj.id} obj={obj} tool={tool} updateObject={updateObject} saveCheckpoint={saveCheckpoint} />
                             ))}
-                         </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* AI Analysis Result Modal */}
+            {showAnalysisModal && analysisResult && (
+                <div style={styles.modalOverlay}>
+                    <div style={{ ...styles.modalContent, width: 500, height: 'auto', background: 'white', borderRadius: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                            <div style={{ background: '#f3e5f5', padding: 8, borderRadius: 8, color: '#8e24aa' }}>
+                                <Sparkles size={24} />
+                            </div>
+                            <div>
+                                <h2 style={{ fontSize: 20, fontWeight: 'bold', margin: 0, color: '#202124' }}>I see a {analysisResult.type === 'kanban' ? 'Kanban Board' : 'Task'}!</h2>
+                                <span style={{ fontSize: 14, color: '#5f6368' }}>Confidence: {(analysisResult.confidence * 100).toFixed(0)}%</span>
+                            </div>
+                        </div>
+
+                        <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8, marginBottom: 24, border: '1px solid #dadce0' }}>
+                            <h3 style={{ fontSize: 16, fontWeight: 600, marginTop: 0, marginBottom: 8 }}>{analysisResult.data?.title || "Untitled"}</h3>
+                            <p style={{ fontSize: 14, color: '#3c4043', margin: 0, lineHeight: 1.5 }}>{analysisResult.data?.description}</p>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                            <button onClick={() => setShowAnalysisModal(false)} style={{ ...styles.textBtn, border: 'none', background: 'transparent' }}>Dismiss</button>
+                            <button
+                                onClick={() => { alert(`Create ${analysisResult.type} feature coming soon!`); setShowAnalysisModal(false); }}
+                                style={{ ...styles.shareBtn, background: '#1e8e3e' }}
+                            >
+                                Create {analysisResult.type === 'kanban' ? 'Board' : 'Task'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
@@ -684,7 +799,7 @@ const DraggableObject = ({ obj, tool, updateObject, saveCheckpoint }: any) => {
     const handleDrag = (e: React.MouseEvent) => {
         if (!isSelected || isEditing) return
         e.preventDefault() // Stop text selection
-        
+
         saveCheckpoint() // Save before drag starts
 
         const startX = e.clientX
@@ -693,7 +808,7 @@ const DraggableObject = ({ obj, tool, updateObject, saveCheckpoint }: any) => {
         const initY = obj.y
 
         const onMove = (me: MouseEvent) => {
-             updateObject({ ...obj, x: initX + (me.clientX - startX), y: initY + (me.clientY - startY) })
+            updateObject({ ...obj, x: initX + (me.clientX - startX), y: initY + (me.clientY - startY) })
         }
         const onUp = () => {
             window.removeEventListener('mousemove', onMove as any)
@@ -727,13 +842,13 @@ const DraggableObject = ({ obj, tool, updateObject, saveCheckpoint }: any) => {
                 cursor: isSelected ? 'grab' : 'default', userSelect: 'none'
             }}>
                 {isEditing ? (
-                     <textarea 
+                    <textarea
                         autoFocus
                         value={tempContent}
                         onChange={(e) => setTempContent(e.target.value)}
                         onBlur={handleBlur}
-                        style={{width: '100%', height: '100%', background: 'transparent', border: 'none', resize: 'none', fontFamily: 'inherit', fontSize: 'inherit', textAlign: 'center', outline: 'none'}}
-                     />
+                        style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', resize: 'none', fontFamily: 'inherit', fontSize: 'inherit', textAlign: 'center', outline: 'none' }}
+                    />
                 ) : obj.content}
             </div>
         )
@@ -741,23 +856,23 @@ const DraggableObject = ({ obj, tool, updateObject, saveCheckpoint }: any) => {
 
     if (obj.type === 'shape') {
         const shapeStyles: any = {
-             circle: { borderRadius: '50%' },
-             square: {}, // Default
-             rounded_rect: { borderRadius: 12 },
-             diamond: { transform: 'rotate(45deg)' }
-             // Complex shapes like triangle/arrow need SVG or clip-path
+            circle: { borderRadius: '50%' },
+            square: {}, // Default
+            rounded_rect: { borderRadius: 12 },
+            diamond: { transform: 'rotate(45deg)' }
+            // Complex shapes like triangle/arrow need SVG or clip-path
         }
-        
+
         const isComplex = ['triangle', 'arrow', 'half_circle', 'bar'].includes(obj.shapeType)
-        
+
         return (
             <div onMouseDown={handleDrag} style={{
                 position: 'absolute', left: obj.x, top: obj.y,
                 width: obj.width, height: obj.height,
                 cursor: isSelected ? 'grab' : 'default',
-            }}> 
+            }}>
                 {isComplex ? (
-                     <ShapeSvg type={obj.shapeType} color={obj.color} width={obj.width} height={obj.height} />
+                    <ShapeSvg type={obj.shapeType} color={obj.color} width={obj.width} height={obj.height} />
                 ) : (
                     <div style={{
                         width: '100%', height: '100%', border: '2px solid #000',
@@ -767,7 +882,7 @@ const DraggableObject = ({ obj, tool, updateObject, saveCheckpoint }: any) => {
             </div>
         )
     }
-    
+
     if (obj.type === 'image') {
         return (
             <div onMouseDown={handleDrag} style={{
@@ -776,14 +891,14 @@ const DraggableObject = ({ obj, tool, updateObject, saveCheckpoint }: any) => {
                 cursor: isSelected ? 'grab' : 'default',
                 boxShadow: isSelected ? '0 0 0 2px #1a73e8' : 'none'
             }}>
-                <img src={obj.content} style={{width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none'}} />
+                <img src={obj.content} style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
             </div>
         )
     }
 
     if (obj.type === 'text') {
         return (
-             <div onMouseDown={handleDrag} onDoubleClick={handleDoubleClick} style={{
+            <div onMouseDown={handleDrag} onDoubleClick={handleDoubleClick} style={{
                 position: 'absolute', left: obj.x, top: obj.y,
                 color: obj.color === 'transparent' ? 'black' : obj.color,
                 fontSize: 32, fontWeight: 'bold', fontFamily: 'sans-serif',
@@ -791,16 +906,16 @@ const DraggableObject = ({ obj, tool, updateObject, saveCheckpoint }: any) => {
                 minWidth: 50, minHeight: 40
             }}>
                 {isEditing ? (
-                    <input 
+                    <input
                         autoFocus
                         ref={inputRef}
                         value={tempContent}
                         onChange={(e) => setTempContent(e.target.value)}
                         onBlur={handleBlur}
                         style={{
-                            background: 'transparent', border: 'none', outline: '2px solid #1a73e8', 
+                            background: 'transparent', border: 'none', outline: '2px solid #1a73e8',
                             fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit'
-                        }} 
+                        }}
                     />
                 ) : obj.content}
             </div>
@@ -814,25 +929,25 @@ const ShapeSvg = ({ type, color, width, height }: any) => {
     // Simple SVG renderers for complex shapes
     if (type === 'triangle') {
         return (
-             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 <path d="M50 5 L95 95 L5 95 Z" fill="transparent" stroke="black" strokeWidth="4" />
-             </svg>
+            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M50 5 L95 95 L5 95 Z" fill="transparent" stroke="black" strokeWidth="4" />
+            </svg>
         )
     }
     if (type === 'arrow') {
         return (
-             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 <path d="M10 40 L60 40 L60 20 L95 50 L60 80 L60 60 L10 60 Z" fill="transparent" stroke="black" strokeWidth="4" />
-             </svg>
+            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M10 40 L60 40 L60 20 L95 50 L60 80 L60 60 L10 60 Z" fill="transparent" stroke="black" strokeWidth="4" />
+            </svg>
         )
     }
     if (type === 'half_circle') {
-         return (
-             <div style={{width: '100%', height: '50%', border: '2px solid black', borderBottom: 'none', borderRadius: '100px 100px 0 0', marginTop: '50%'}} />
-         )
+        return (
+            <div style={{ width: '100%', height: '50%', border: '2px solid black', borderBottom: 'none', borderRadius: '100px 100px 0 0', marginTop: '50%' }} />
+        )
     }
     if (type === 'bar') {
-        return <div style={{width: '100%', height: '100%', border: '2px solid black', borderRadius: 4}} />
+        return <div style={{ width: '100%', height: '100%', border: '2px solid black', borderRadius: 4 }} />
     }
     return null
 }
@@ -842,18 +957,18 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
     const words = text.split(' ');
     let line = '';
 
-    for(let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + ' ';
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-      if (testWidth > maxWidth && n > 0) {
-        ctx.fillText(line, x, y);
-        line = words[n] + ' ';
-        y += lineHeight;
-      }
-      else {
-        line = testLine;
-      }
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+        }
+        else {
+            line = testLine;
+        }
     }
     ctx.fillText(line, x, y);
 }
@@ -863,11 +978,11 @@ function drawShapeOnContext(ctx: CanvasRenderingContext2D, obj: BoardObject) {
     ctx.strokeStyle = '#000'
     ctx.lineWidth = 2
     if (obj.shapeType === 'circle') {
-        ctx.beginPath(); ctx.ellipse(50, 50, 50, 50, 0, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(50, 50, 50, 50, 0, 0, Math.PI * 2); ctx.stroke();
     } else if (obj.shapeType === 'triangle') {
         ctx.beginPath(); ctx.moveTo(50, 0); ctx.lineTo(100, 100); ctx.lineTo(0, 100); ctx.closePath(); ctx.stroke();
     } else {
-        ctx.strokeRect(0, 0, obj.width||100, obj.height||100)
+        ctx.strokeRect(0, 0, obj.width || 100, obj.height || 100)
     }
 }
 
@@ -877,13 +992,13 @@ const styles: any = {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px'
     },
     topLeft: { display: 'flex', alignItems: 'center', gap: 16 },
-    logo: { 
+    logo: {
         width: 40, height: 40, background: '#fbbc04', borderRadius: 8,
         display: 'flex', alignItems: 'center', justifyContent: 'center'
     },
     titleGroup: { display: 'flex', flexDirection: 'column' },
     docTitle: { fontSize: 18, color: '#202124', fontWeight: 500 },
-    
+
     topCenter: { position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
     pagination: {
         display: 'flex', alignItems: 'center', background: '#f1f3f4',
@@ -895,7 +1010,7 @@ const styles: any = {
     topRight: { display: 'flex', alignItems: 'center', gap: 12 },
     iconBtn: { background: 'transparent', border: 'none', padding: 8, cursor: 'pointer', color: '#5f6368', display: 'flex' },
     separator: { width: 1, height: 24, background: '#dadce0', margin: '0 4px' },
-    meetIcon: { width: 24, height: 24, border: '1px solid #dadce0', borderRadius: 4, background: 'linear-gradient(135deg, #00ac47 50%, #0066da 50%)', opacity: 0.5 }, 
+    meetIcon: { width: 24, height: 24, border: '1px solid #dadce0', borderRadius: 4, background: 'linear-gradient(135deg, #00ac47 50%, #0066da 50%)', opacity: 0.5 },
     shareBtn: {
         background: '#1a73e8', color: 'white', border: 'none', borderRadius: 4,
         padding: '8px 16px', fontSize: 14, fontWeight: 500, cursor: 'pointer',
@@ -918,7 +1033,7 @@ const styles: any = {
         position: 'relative', overflow: 'hidden'
     },
     canvas: { width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 },
-    
+
     popupMenu: {
         position: 'absolute', left: 80, top: '42%',
         background: 'white', borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
@@ -928,7 +1043,7 @@ const styles: any = {
     brushBtn: { width: 32, height: 32, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
     colorRow: { display: 'flex', gap: 12 },
     colorBtn: { width: 24, height: 24, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' },
-    
+
     shapeBtn: { width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
 
     modalOverlay: {

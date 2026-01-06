@@ -1,8 +1,25 @@
 import { Router } from "express";
 import { graph } from "../services/graph/workflow";
 import { HumanMessage } from "@langchain/core/messages";
+import { analyzeWhiteboardImage } from "../services/whiteboard-analysis";
 
 const router = Router();
+
+router.post("/analyze-whiteboard", async (req, res) => {
+    try {
+        const { image } = req.body; // Base64 string
+        if (!image) {
+            return res.status(400).json({ error: "Image is required (base64)" });
+        }
+
+        console.log("Analyze request received, length:", image.length);
+        const result = await analyzeWhiteboardImage(image);
+        res.json(result);
+    } catch (error) {
+        console.error("Whiteboard Analysis Route Error:", error);
+        res.status(500).json({ error: "Analysis failed" });
+    }
+});
 
 router.post("/chat", async (req, res) => {
     try {
