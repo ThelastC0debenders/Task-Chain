@@ -34,17 +34,24 @@ const ChatLayout = () => {
     const [activeChannel, setActiveChannel] = useState<string | null>(null)
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
-    const [userId] = useState("user-" + Math.floor(Math.random() * 1000)) // Mock User
+    const [userId] = useState(() => {
+        const stored = localStorage.getItem("chat_user_id")
+        if (stored) return stored
+        const newId = "user-" + Math.floor(Math.random() * 1000)
+        localStorage.setItem("chat_user_id", newId)
+        return newId
+    })
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         loadChannels()
 
         socket.on("receive_message", (msg: Message) => {
-            if (msg.channelId === activeChannel) {
-                // Handle message reception
-            }
-            setMessages(prev => [...prev, msg])
+            // Check if message is already there to avoid duplicates if API also adds it on load (rare race condition)
+            setMessages(prev => {
+                if (prev.some(p => p.id === msg.id)) return prev
+                return [...prev, msg]
+            })
             scrollToBottom()
         })
 
@@ -74,18 +81,38 @@ const ChatLayout = () => {
     }
 
     const loadMessages = async (channelId: string) => {
-        const list = await chatService.getMessages(channelId)
-        setMessages(list)
-        scrollToBottom()
+        try {
+            const list = await chatService.getMessages(channelId)
+            setMessages(list)
+            scrollToBottom()
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     const handleSend = async () => {
         if (!input.trim() || !activeChannel) return
+
+        const tempId = Date.now().toString()
+        const msgPayload: Message = {
+            id: tempId,
+            channelId: activeChannel,
+            senderId: userId,
+            content: input,
+            timestamp: Date.now()
+        }
+
         try {
-            await chatService.sendMessage(activeChannel, userId, input)
+            // 1. Emit to Socket (Real-time)
+            socket.emit("send_message", msgPayload)
+
+            // 2. Clear Input
             setInput("")
+
+            // 3. Persist via API (Background)
+            await chatService.sendMessage(activeChannel, userId, input)
         } catch (e) {
-            console.error(e)
+            console.error("Failed to send", e)
         }
     }
 
@@ -469,14 +496,24 @@ const styles: any = {
         fontWeight: 'normal'
     },
     bubble: {
-        color: '#ccc',
+        backgroundColor: '#1a1a1a',
+        padding: '10px 14px',
+        borderRadius: '12px 12px 12px 2px',
+        color: '#e0e0e0',
         fontSize: '14px',
         lineHeight: '1.5',
+        maxWidth: 'fit-content'
     },
     myBubble: {
-        color: '#fff',
+        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+        border: '1px solid rgba(0, 255, 136, 0.2)',
+        padding: '10px 14px',
+        borderRadius: '12px 12px 2px 12px',
+        color: '#ffffff',
         fontSize: '14px',
-        lineHeight: '1.5'
+        lineHeight: '1.5',
+        maxWidth: 'fit-content',
+        alignSelf: 'flex-end'
     },
 
     // System Pill
