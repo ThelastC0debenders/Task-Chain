@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { ThemeProvider } from "./context/ThemeContext"
 import Home from "./pages/home"
 import CreateTask from "./pages/createtask"
 import TaskView from "./pages/taskview"
@@ -17,29 +18,29 @@ import HealthDashboard from "./pages/health-dashboard"
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/create" element={<CreateTask />} />
-        <Route path="/task" element={<TaskView />} />
-        <Route path="/receipt" element={<Receipt />} />
-        <Route path="/leader" element={<LeaderDashboard />} />
-        <Route path="/member" element={<MemberDashboard />} />
-        <Route path="/work" element={<WorkDashboard />} />
-        <Route path="/invite" element={<MemberDashboard />} />
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/create" element={<CreateTask />} />
+          <Route path="/task" element={<TaskView />} />
+          <Route path="/receipt" element={<Receipt />} />
+          <Route path="/leader" element={<LeaderDashboard />} />
+          <Route path="/member" element={<MemberDashboard />} />
+          <Route path="/work" element={<WorkDashboard />} />
+          <Route path="/invite" element={<MemberDashboard />} />
 
-        {/* Productivity Suite */}
-        <Route path="/chat" element={<ChatLayout />} />
-        <Route path="/board" element={<KanbanBoard />} />
-        <Route path="/board/:boardId" element={<KanbanBoard />} />
-        <Route path="/calendar" element={<CalendarLayout />} />
-        <Route path="/meet" element={<MeetingRoom />} />
-        <Route path="/docs" element={<DocsLayout />} />
-        <Route path="/whiteboard" element={<Whiteboard />} />
-        <Route path="/whiteboard/:wbId" element={<Whiteboard />} />
-        <Route path="/graph-debug" element={<GraphDebugger />} />
-        <Route path="/health" element={<HealthDashboard />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Productivity Suite */}
+          <Route path="/chat" element={<ChatLayout />} />
+          <Route path="/board" element={<KanbanBoard />} />
+          <Route path="/calendar" element={<CalendarLayout />} />
+          <Route path="/meet" element={<MeetingRoom />} />
+          <Route path="/docs" element={<DocsLayout />} />
+          <Route path="/whiteboard" element={<Whiteboard />} />
+          <Route path="/graph-debug" element={<GraphDebugger />} />
+          <Route path="/health" element={<HealthDashboard />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }

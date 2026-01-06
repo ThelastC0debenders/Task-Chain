@@ -1,3 +1,3 @@
 // Local Hardhat deployment
-export const CONTRACT_ADDRESS = "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1"
+export const CONTRACT_ADDRESS = "0xC469e7aE4aD962c30c7111dc580B4adbc7E914DD"
 export const CHAIN_ID = 31337

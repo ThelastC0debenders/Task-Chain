@@ -3,7 +3,8 @@ import axios from "axios"
 import { connectWallet } from "../services/wallet"
 import { createTaskOnChain } from "../services/contract"
 import {
-  Wallet,
+  // Wallet, // Removed unused
+
   PlusCircle,
   Users,
   Plus,
@@ -21,9 +22,11 @@ import {
   Layout,
   Calendar,
   Video,
+  Monitor,
+
   FileText,
-  Monitor
 } from "lucide-react"
+import Navbar from "../components/Navbar"
 
 const API = "/api"
 
@@ -201,34 +204,13 @@ export default function LeaderDashboard() {
   return (
     <div style={styles.container}>
       {/* Top Navigation Bar */}
-      <header style={styles.header}>
-        <div style={styles.logoArea}>
-          <div style={styles.logoIcon}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#00ff88" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M2 17L12 22L22 17" stroke="#00ff88" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M2 12L12 17L22 12" stroke="#00ff88" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </div>
-          <div>
-            <h1 style={styles.title}>TaskChain</h1>
-            <p style={styles.subtitle}>PROTOCOL CONSOLE</p>
-          </div>
-        </div>
-
-        <div style={styles.headerTitle}>Leader Dashboard</div>
-
-        <div style={styles.headerActions}>
-          {/* <div style={styles.betaBadge}>Mainnet Beta</div> */}
-          {address ? (
-            <div style={styles.walletBadge}>
-              <Wallet size={14} />
-              {address.slice(0, 6)}...{address.slice(-2)}
-              <span style={styles.connectedText}>Connected</span>
-            </div>
-          ) : (
-            <button onClick={connectAndLoad} style={styles.connectBtnSmall}>
-              Connect Wallet
-            </button>
-          )}
-        </div>
-      </header>
+      <Navbar 
+        title="Leader Dashboard" 
+        subtitle="PROTOCOL CONSOLE"
+        isConnected={!!address} 
+        address={address} 
+        onConnect={connectAndLoad}
+      />
 
       {/* Sub Header / Status Bar */}
       <div style={styles.statusBar}>
@@ -596,20 +578,21 @@ export default function LeaderDashboard() {
 const styles: any = {
   container: {
     minHeight: "100vh",
-    background: "#050505",
-    color: "#e0e0e0",
+    background: "var(--bg-primary)",
+    color: "var(--text-primary)",
     fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
     display: "flex",
     flexDirection: "column",
+    transition: "background 0.3s, color 0.3s"
   },
   header: {
     height: "70px",
-    borderBottom: "1px solid #1a1a1a",
+    borderBottom: "1px solid var(--border-color)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: "0 30px",
-    background: "#080808",
+    background: "var(--bg-secondary)",
   },
   logoArea: {
     display: "flex",
@@ -628,13 +611,13 @@ const styles: any = {
   title: {
     fontSize: "18px",
     fontWeight: "800",
-    color: "#ffffff",
+    color: "var(--text-primary)",
     margin: 0,
     lineHeight: 1,
   },
   subtitle: {
     fontSize: "10px",
-    color: "#00ff88",
+    color: "var(--accent-primary)",
     margin: 0,
     letterSpacing: "1px",
     opacity: 0.8,
@@ -643,7 +626,7 @@ const styles: any = {
     position: "absolute",
     left: "50%",
     transform: "translateX(-50%)",
-    color: "#ffffff",
+    color: "var(--text-primary)",
     fontSize: "14px",
     fontWeight: "600",
   },
@@ -653,37 +636,37 @@ const styles: any = {
     gap: "15px",
   },
   betaBadge: {
-    background: "#062215",
-    color: "#00ff88",
+    background: "rgba(0, 255, 136, 0.1)",
+    color: "var(--accent-primary)",
     fontSize: "12px",
     padding: "4px 10px",
     borderRadius: "20px",
-    border: "1px solid #0a3a22",
+    border: "1px solid rgba(0, 255, 136, 0.2)",
   },
   walletBadge: {
-    background: "#111",
-    border: "1px solid #333",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     padding: "6px 12px",
     borderRadius: "6px",
     fontSize: "13px",
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    color: "#ccc",
+    color: "var(--text-secondary)",
   },
   walletIcon: {
     fontSize: "14px",
   },
   connectedText: {
-    background: "#1a1a1a",
+    background: "var(--bg-secondary)",
     padding: "2px 6px",
     borderRadius: "4px",
     fontSize: "10px",
-    color: "#666",
+    color: "var(--text-tertiary)",
   },
   connectBtnSmall: {
-    background: "#00ff88",
-    color: "black",
+    background: "var(--accent-primary)",
+    color: "var(--text-on-accent)",
     border: "none",
     padding: "6px 14px",
     borderRadius: "4px",
@@ -694,8 +677,8 @@ const styles: any = {
 
   statusBar: {
     height: "40px",
-    background: "rgba(0, 255, 136, 0.03)",
-    borderBottom: "1px solid #1a1a1a",
+    background: "var(--bg-tertiary)",
+    borderBottom: "1px solid var(--border-color)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -714,22 +697,22 @@ const styles: any = {
     boxShadow: "0 0 5px currentColor",
   },
   statusText: {
-    color: "#00ff88",
+    color: "var(--accent-primary)",
     fontWeight: "bold",
     letterSpacing: "0.5px",
   },
-  divider: { color: "#333" },
-  sessionText: { color: "#666" },
+  divider: { color: "var(--border-color)" },
+  sessionText: { color: "var(--text-secondary)" },
   hashTag: {
-    background: "#111",
+    background: "var(--bg-secondary)",
     padding: "2px 6px",
     borderRadius: "4px",
-    border: "1px solid #222",
+    border: "1px solid var(--border-color)",
     fontFamily: "monospace",
-    color: "#aaa"
+    color: "var(--text-tertiary)"
   },
   statusMessage: {
-    color: "#00ff88",
+    color: "var(--accent-primary)",
   },
 
   main: {
@@ -748,8 +731,8 @@ const styles: any = {
   },
   tabBtn: (active: boolean) => ({
     background: active ? "rgba(0, 255, 136, 0.1)" : "transparent",
-    border: active ? "1px solid #00ff88" : "1px solid #333",
-    color: active ? "#00ff88" : "#888",
+    border: active ? "1px solid var(--accent-primary)" : "1px solid var(--border-color)",
+    color: active ? "var(--accent-primary)" : "var(--text-secondary)",
     padding: "10px 20px",
     borderRadius: "6px",
     cursor: "pointer",
@@ -769,19 +752,19 @@ const styles: any = {
   sectionTitleBorder: {
     width: "4px",
     height: "24px",
-    background: "#00ff88",
+    background: "var(--accent-primary)",
     marginRight: "12px",
-    boxShadow: "0 0 8px #00ff88",
+    boxShadow: "0 0 8px var(--accent-primary)",
   },
   sectionTitle: {
     fontSize: "24px",
-    color: "#fff",
+    color: "var(--text-primary)",
     margin: 0,
     fontWeight: "700",
   },
   protocolText: {
     marginLeft: "auto",
-    color: "#444",
+    color: "var(--text-tertiary)",
     fontSize: "12px",
     letterSpacing: "1px",
     textTransform: "uppercase",
@@ -801,8 +784,8 @@ const styles: any = {
     width: "100%",
   },
   appCard: {
-    background: "#0a0a0a",
-    border: "1px solid #1f1f1f",
+    background: "var(--bg-secondary)",
+    border: "1px solid var(--border-color)",
     borderRadius: "12px",
     padding: "30px",
     display: "flex",
@@ -817,7 +800,7 @@ const styles: any = {
     width: "60px",
     height: "60px",
     borderRadius: "12px",
-    background: "rgba(255,255,255,0.03)",
+    background: "var(--bg-tertiary)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -825,21 +808,21 @@ const styles: any = {
   },
   appTitle: {
     margin: "0 0 10px 0",
-    color: "white",
+    color: "var(--text-primary)",
     fontSize: "18px",
     fontWeight: "bold",
   },
   appDesc: {
     margin: "0 0 20px 0",
-    color: "#888",
+    color: "var(--text-secondary)",
     fontSize: "13px",
     lineHeight: "1.4",
   },
   launchBtn: {
     marginTop: "auto",
     background: "transparent",
-    border: "1px solid #333",
-    color: "#00ff88",
+    border: "1px solid var(--border-color)",
+    color: "var(--accent-primary)",
     padding: "8px 16px",
     borderRadius: "6px",
     fontSize: "12px",
@@ -847,14 +830,14 @@ const styles: any = {
     cursor: "pointer",
   },
   card: {
-    background: "#0a0a0a",
-    border: "1px solid #1f1f1f",
+    background: "var(--bg-secondary)",
+    border: "1px solid var(--border-color)",
     borderRadius: "12px",
     padding: "24px",
     position: "relative",
     width: "100%",
     boxSizing: "border-box",
-    minWidth: 0, // Critical for preventing grid blowout
+    minWidth: 0,
   },
   cardHeader: {
     display: "flex",
@@ -865,27 +848,27 @@ const styles: any = {
   cardTitle: {
     fontSize: "16px",
     fontWeight: "600",
-    color: "#fff",
+    color: "var(--text-primary)",
     margin: 0,
     display: "flex",
     alignItems: "center",
     gap: "10px",
   },
-  plusIcon: { color: "#00ff88" },
+  plusIcon: { color: "var(--accent-primary)" },
   onChainBadge: {
     fontSize: "10px",
-    background: "#111",
-    border: "1px solid #333",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     padding: "4px 8px",
     borderRadius: "4px",
-    color: "#666",
+    color: "var(--text-secondary)",
   },
 
   formGroup: { marginBottom: "20px" },
   formGroupHalf: { marginBottom: "20px", flex: 1 },
   label: {
     display: "block",
-    color: "#666",
+    color: "var(--text-tertiary)",
     fontSize: "11px",
     fontWeight: "bold",
     marginBottom: "8px",
@@ -894,10 +877,10 @@ const styles: any = {
   },
   input: {
     width: "100%",
-    background: "#0f0f0f",
-    border: "1px solid #2a2a2a",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     padding: "12px",
-    color: "white",
+    color: "var(--text-primary)",
     borderRadius: "6px",
     fontSize: "14px",
     fontFamily: "inherit",
@@ -905,10 +888,10 @@ const styles: any = {
   },
   textarea: {
     width: "100%",
-    background: "#0f0f0f",
-    border: "1px solid #2a2a2a",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     padding: "12px",
-    color: "white",
+    color: "var(--text-primary)",
     borderRadius: "6px",
     fontSize: "14px",
     fontFamily: "inherit",
@@ -919,10 +902,10 @@ const styles: any = {
   row: { display: "flex", gap: "20px" },
   select: {
     width: "100%",
-    background: "#0f0f0f",
-    border: "1px solid #2a2a2a",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     padding: "12px",
-    color: "white",
+    color: "var(--text-primary)",
     borderRadius: "6px",
     fontSize: "14px",
     fontFamily: "inherit",
@@ -930,8 +913,8 @@ const styles: any = {
     appearance: "none",
   },
   inputWithUnit: {
-    background: "#0f0f0f",
-    border: "1px solid #2a2a2a",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     borderRadius: "6px",
     display: "flex",
     alignItems: "center",
@@ -942,17 +925,17 @@ const styles: any = {
     background: "transparent",
     border: "none",
     padding: "12px",
-    color: "white",
+    color: "var(--text-primary)",
     fontSize: "14px",
     fontFamily: "inherit",
     outline: "none",
   },
-  unit: { color: "#666", fontSize: "12px", fontWeight: "bold" },
+  unit: { color: "var(--text-secondary)", fontSize: "12px", fontWeight: "bold" },
 
   createChainBtn: {
     width: "100%",
-    background: "#00ff88",
-    color: "#000",
+    background: "var(--accent-primary)",
+    color: "var(--text-on-accent)",
     border: "none",
     padding: "15px",
     borderRadius: "6px",
@@ -965,7 +948,7 @@ const styles: any = {
   },
   secureText: {
     textAlign: "center",
-    color: "#444",
+    color: "var(--text-tertiary)",
     fontSize: "11px",
   },
 
@@ -980,15 +963,15 @@ const styles: any = {
   },
   statCard: {
     flex: 1,
-    background: "#0a0a0a",
-    border: "1px solid #1f1f1f",
+    background: "var(--bg-secondary)",
+    border: "1px solid var(--border-color)",
     borderRadius: "12px",
     padding: "20px",
     position: "relative",
     overflow: "hidden",
   },
   statLabel: {
-    color: "#666",
+    color: "var(--text-tertiary)",
     fontSize: "11px",
     fontWeight: "bold",
     letterSpacing: "0.5px",
@@ -997,39 +980,39 @@ const styles: any = {
   statValue: {
     fontSize: "32px",
     fontWeight: "700",
-    color: "#fff",
+    color: "var(--text-primary)",
     display: "flex",
     alignItems: "baseline",
     gap: "10px",
   },
-  statSub: { fontSize: "12px", color: "#00ff88" },
+  statSub: { fontSize: "12px", color: "var(--accent-primary)" },
   statSubWarn: { fontSize: "12px", color: "#ff9900" },
   iconPos: { position: "absolute", top: "20px", right: "20px" },
 
   registryCard: {
     flex: 1,
-    background: "#0a0a0a",
-    border: "1px solid #1f1f1f",
+    background: "var(--bg-secondary)",
+    border: "1px solid var(--border-color)",
     borderRadius: "12px",
     display: "flex",
     flexDirection: "column",
   },
   registryHeader: {
     padding: "20px",
-    borderBottom: "1px solid #1f1f1f",
+    borderBottom: "1px solid var(--border-color)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  listIcon: { color: "#00ff88", marginRight: "10px" },
+  listIcon: { color: "var(--accent-primary)", marginRight: "10px" },
   registryActions: { display: "flex", gap: "10px" },
-  iconBtn: { background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: "16px" },
+  iconBtn: { background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: "16px" },
 
   tableHeader: {
     display: "flex",
     padding: "15px 20px",
-    background: "#0e0e0e",
-    color: "#444",
+    background: "var(--bg-tertiary)",
+    color: "var(--text-secondary)",
     fontSize: "10px",
     fontWeight: "bold",
     textTransform: "uppercase",
@@ -1041,8 +1024,8 @@ const styles: any = {
     maxHeight: "400px",
   },
   taskItem: {
-    background: "#0e0e0e",
-    border: "1px solid #1f1f1f",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
     padding: "15px",
     marginBottom: "10px",
@@ -1052,8 +1035,8 @@ const styles: any = {
     cursor: "pointer",
   },
   taskItemMain: { flex: 2 },
-  taskItemTitle: { color: "white", fontSize: "14px", fontWeight: "600", marginBottom: "4px" },
-  taskItemMeta: { color: "#666", fontSize: "11px" },
+  taskItemTitle: { color: "var(--text-primary)", fontSize: "14px", fontWeight: "600", marginBottom: "4px" },
+  taskItemMeta: { color: "var(--text-secondary)", fontSize: "11px" },
   taskItemPriority: { flex: 1 },
   priorityBadge: {
     fontSize: "10px",
@@ -1065,47 +1048,47 @@ const styles: any = {
   },
   taskItemStatus: { flex: 1 },
   statusPill: {
-    background: "#111",
-    border: "1px solid #333",
+    background: "var(--bg-primary)",
+    border: "1px solid var(--border-color)",
     padding: "4px 8px",
     borderRadius: "20px",
     fontSize: "10px",
-    color: "#aaa",
+    color: "var(--text-secondary)",
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",
   },
   statusDotSmall: { width: "6px", height: "6px", borderRadius: "50%" },
   taskItemReward: { flex: 1, textAlign: "right" },
-  rewardValue: { color: "white", fontWeight: "bold", fontSize: "14px" },
-  unitSmall: { color: "#666", fontSize: "10px", marginLeft: "4px" },
-  emptyState: { padding: "40px", textAlign: "center", color: "#444", fontStyle: "italic" },
+  rewardValue: { color: "var(--text-primary)", fontWeight: "bold", fontSize: "14px" },
+  unitSmall: { color: "var(--text-secondary)", fontSize: "10px", marginLeft: "4px" },
+  emptyState: { padding: "40px", textAlign: "center", color: "var(--text-tertiary)", fontStyle: "italic" },
 
   // Invite Tab Specific
-  linkIcon: { color: "#00ff88", marginRight: "10px" },
-  securedBadge: { fontSize: "10px", border: "1px solid #333", padding: "2px 6px", textTransform: "uppercase", letterSpacing: "1px", color: "#666" },
+  linkIcon: { color: "var(--accent-primary)", marginRight: "10px" },
+  securedBadge: { fontSize: "10px", border: "1px solid var(--border-color)", padding: "2px 6px", textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-secondary)" },
   inputIconWrapper: {
     display: "flex",
-    background: "#0f0f0f",
-    border: "1px solid #2a2a2a",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     borderRadius: "6px",
     alignItems: "center",
   },
-  inputPrefix: { padding: "0 12px", color: "#666" },
+  inputPrefix: { padding: "0 12px", color: "var(--text-secondary)" },
   inputWithPrefix: {
     flex: 1,
     background: "transparent",
     border: "none",
     padding: "12px 0",
-    color: "white",
+    color: "var(--text-primary)",
     fontSize: "14px",
     fontFamily: "inherit",
     outline: "none",
   },
   generateBtn: {
     width: "100%",
-    background: "#00ff88",
-    color: "#000",
+    background: "var(--accent-primary)",
+    color: "var(--text-on-accent)",
     border: "none",
     padding: "15px",
     borderRadius: "6px",
@@ -1117,7 +1100,7 @@ const styles: any = {
     textTransform: "uppercase",
   },
   inviteSection: {
-    borderTop: "1px solid #1f1f1f",
+    borderTop: "1px solid var(--border-color)",
     paddingTop: "20px",
   },
   inviteHeader: {
@@ -1125,11 +1108,11 @@ const styles: any = {
     justifyContent: "space-between",
     marginBottom: "10px",
   },
-  inviteLabel: { color: "#00ff88", fontSize: "11px", fontWeight: "bold" },
-  activeDot: { color: "#00ff88", fontSize: "10px", background: "rgba(0,255,136,0.1)", padding: "2px 6px", borderRadius: "10px" },
+  inviteLabel: { color: "var(--accent-primary)", fontSize: "11px", fontWeight: "bold" },
+  activeDot: { color: "var(--accent-primary)", fontSize: "10px", background: "rgba(0,255,136,0.1)", padding: "2px 6px", borderRadius: "10px" },
   inviteBox: {
-    background: "#111",
-    border: "1px solid #222",
+    background: "var(--bg-tertiary)",
+    border: "1px solid var(--border-color)",
     borderRadius: "6px",
     padding: "8px",
     display: "flex",
@@ -1141,7 +1124,7 @@ const styles: any = {
   inviteLink: {
     flex: 1,
     padding: "0 12px",
-    color: "#888",
+    color: "var(--text-secondary)",
     fontSize: "12px",
     fontFamily: "monospace",
     overflow: "hidden",
@@ -1150,41 +1133,41 @@ const styles: any = {
     minWidth: 0,
     maxWidth: "400px", // Explicit constraint
   },
-  copyBtn: { background: "#222", border: "none", color: "#fff", padding: "8px 12px", borderRadius: "4px", cursor: "pointer" },
-  sigConfirmed: { fontSize: "10px", color: "#555", display: "flex", alignItems: "center", gap: "6px" },
-  link: { color: "#00ff88", textDecoration: "none" },
+  copyBtn: { background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", padding: "8px 12px", borderRadius: "4px", cursor: "pointer" },
+  sigConfirmed: { fontSize: "10px", color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: "6px" },
+  link: { color: "var(--accent-primary)", textDecoration: "none" },
 
-  refreshBtn: { background: "none", border: "none", color: "#666", fontSize: "10px", cursor: "pointer", textTransform: "uppercase" },
+  refreshBtn: { background: "none", border: "none", color: "var(--text-secondary)", fontSize: "10px", cursor: "pointer", textTransform: "uppercase" },
   membersArea: { flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "300px" },
-  noMembers: { textAlign: "center", color: "#444" },
+  noMembers: { textAlign: "center", color: "var(--text-tertiary)" },
   peopleIcon: { fontSize: "40px", marginBottom: "15px", opacity: 0.2 },
-  waitingBadge: { display: "inline-block", marginTop: "20px", background: "rgba(0,255,136,0.05)", color: "#00ff88", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", border: "1px solid #004422" },
+  waitingBadge: { display: "inline-block", marginTop: "20px", background: "rgba(0,255,136,0.05)", color: "var(--accent-primary)", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", border: "1px solid rgba(0, 255, 136, 0.2)" },
 
   memberList: { width: "100%" },
-  memberRow: { display: "flex", alignItems: "center", padding: "12px", borderBottom: "1px solid #1f1f1f", gap: "15px" },
-  memberAvatar: { width: "24px", height: "24px", background: "#1f1f1f", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#666" },
-  memberHash: { flex: 1, fontFamily: "monospace", fontSize: "13px", color: "#aaa" },
-  memberStatus: { fontSize: "10px", color: "#00ff88", border: "1px solid #004422", padding: "2px 6px", borderRadius: "4px" },
+  memberRow: { display: "flex", alignItems: "center", padding: "12px", borderBottom: "1px solid var(--border-color)", gap: "15px" },
+  memberAvatar: { width: "24px", height: "24px", background: "var(--bg-tertiary)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "var(--text-secondary)" },
+  memberHash: { flex: 1, fontFamily: "monospace", fontSize: "13px", color: "var(--text-secondary)" },
+  memberStatus: { fontSize: "10px", color: "var(--accent-primary)", border: "1px solid rgba(0, 255, 136, 0.2)", padding: "2px 6px", borderRadius: "4px" },
 
   footerRow: {
-    borderTop: "1px solid #1f1f1f",
+    borderTop: "1px solid var(--border-color)",
     paddingTop: "20px",
     display: "flex",
     justifyContent: "space-between",
     fontSize: "11px",
-    color: "#555",
+    color: "var(--text-tertiary)",
     textTransform: "uppercase",
   },
-  teamIdBadge: { background: "#222", padding: "2px 6px", borderRadius: "4px", color: "white" },
+  teamIdBadge: { background: "var(--bg-secondary)", padding: "2px 6px", borderRadius: "4px", color: "var(--text-primary)" },
 
   quickView: { padding: "0 60px", marginBottom: "15px", display: "flex", justifyContent: "space-between" },
-  quickLabel: { fontSize: "10px", color: "#666", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px" },
-  linkSimple: { fontSize: "10px", color: "#00ff88", cursor: "pointer", textDecoration: "underline" },
+  quickLabel: { fontSize: "10px", color: "var(--text-tertiary)", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px" },
+  linkSimple: { fontSize: "10px", color: "var(--accent-primary)", cursor: "pointer", textDecoration: "underline" },
   bottomStats: { padding: "0 60px 40px", display: "flex", gap: "20px" },
-  bottomCard: { background: "#0c0c0c", padding: "15px 20px", borderRadius: "8px", minWidth: "200px", border: "1px solid #1a1a1a", display: "flex", flexDirection: "column", position: "relative" },
-  bottomLabel: { fontSize: "10px", color: "#555", marginBottom: "4px" },
-  bottomValue: { fontSize: "14px", color: "#fff", fontWeight: "bold" },
+  bottomCard: { background: "var(--bg-secondary)", padding: "15px 20px", borderRadius: "8px", minWidth: "200px", border: "1px solid var(--border-color)", display: "flex", flexDirection: "column", position: "relative" },
+  bottomLabel: { fontSize: "10px", color: "var(--text-secondary)", marginBottom: "4px" },
+  bottomValue: { fontSize: "14px", color: "var(--text-primary)", fontWeight: "bold" },
 
   membersIcons: { position: "absolute", right: "20px", top: "50%", transform: "translateY(-50%)", display: "flex" },
-  circle: { width: "20px", height: "20px", background: "#1f1f1f", borderRadius: "50%", marginLeft: "-8px", border: "2px solid #0c0c0c" },
+  circle: { width: "20px", height: "20px", background: "var(--bg-tertiary)", borderRadius: "50%", marginLeft: "-8px", border: "2px solid var(--bg-secondary)" },
 }

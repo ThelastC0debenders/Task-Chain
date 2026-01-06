@@ -2,11 +2,16 @@ import { useEffect, useState } from "react"
 import * as calendarService from "../services/calendar"
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addMonths, subMonths, isSameMonth, addDays } from "date-fns"
 import { ChevronLeft, ChevronRight, Search, Zap, Clock, Calendar as CalendarIcon, AlertCircle } from "lucide-react"
+import Navbar from "../components/Navbar"
+// import { useTheme } from "../context/ThemeContext"
 
 const CalendarLayout = () => {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [events, setEvents] = useState<any[]>([])
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+    const [isPopupOpen, setIsPopupOpen] = useState(false)
+    const [popupEvents, setPopupEvents] = useState<any[]>([])
+    const [popupDate, setPopupDate] = useState<Date | null>(null)
 
     useEffect(() => {
         loadEvents()
@@ -51,6 +56,8 @@ const CalendarLayout = () => {
 
     return (
         <div style={styles.container}>
+            <Navbar title="Calendar" subtitle="Event Schedule" isConnected={false} />
+            <div style={styles.contentWrapper}>
             {/* Main Calendar Section (Left/Center) */}
             <div style={styles.mainSection}>
                 {/* Header */}
@@ -101,18 +108,31 @@ const CalendarLayout = () => {
                                     onClick={() => handleAddEvent(day)}
                                     style={{
                                         ...styles.dayCell,
-                                        backgroundColor: isCurrent ? '#080808' : '#050505',
+                                        backgroundColor: isCurrent ? 'var(--bg-secondary)' : 'var(--bg-primary)',
                                         opacity: isCurrent ? 1 : 0.4
                                     }}
                                 >
                                     <div style={styles.dayNumber}>{format(day, 'd')}</div>
                                     <div style={styles.eventStack}>
-                                        {dayEvents.map((ev, i) => (
+                                        {dayEvents.slice(0, dayEvents.length > 3 ? 2 : 3).map((ev, i) => (
                                             <div key={i} style={styles.eventPill}>
                                                 <div style={styles.eventDot}></div>
                                                 {ev.title}
                                             </div>
                                         ))}
+                                        {dayEvents.length > 3 && (
+                                            <div 
+                                                style={styles.moreEventsBtn}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setPopupEvents(dayEvents)
+                                                    setPopupDate(day)
+                                                    setIsPopupOpen(true)
+                                                }}
+                                            >
+                                                + {dayEvents.length - 2} more
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )
@@ -125,7 +145,7 @@ const CalendarLayout = () => {
             <div style={styles.sidebar}>
                 {/* Search */}
                 <div style={styles.searchBox}>
-                    <Search size={14} color="#666" />
+                    <Search size={14} color="var(--text-secondary)" />
                     <input style={styles.searchInput} placeholder="Search events..." />
                 </div>
 
@@ -143,7 +163,7 @@ const CalendarLayout = () => {
                             <div key={d.toISOString()} style={{
                                 ...styles.miniDay,
                                 opacity: isSameMonth(d, nextMonthDate) ? 1 : 0.2,
-                                color: isSameDay(d, addDays(new Date(), 3)) ? '#00ff88' : '#888', // Mock highlight
+                                color: isSameDay(d, addDays(new Date(), 3)) ? 'var(--accent-primary)' : 'var(--text-tertiary)', // Mock highlight
                                 background: isSameDay(d, addDays(new Date(), 3)) ? 'rgba(0,255,136,0.1)' : 'transparent'
                             }}>
                                 {format(d, 'd')}
@@ -191,13 +211,40 @@ const CalendarLayout = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Footer */}
+            </div>
+            
             <div style={styles.footer}>
                 <div>SYSTEM STATUS: <span style={styles.statusOk}>OPTIMAL</span></div>
                 <div>TASKCHAIN © 2026 // ALL RIGHTS RESERVED</div>
                 <div>MEM: 45% NET: 1.2GB/s</div>
             </div>
+
+            {/* Event Popup Modal */}
+            {isPopupOpen && (
+                <div style={styles.popupOverlay} onClick={() => setIsPopupOpen(false)}>
+                    <div style={styles.popupCard} onClick={e => e.stopPropagation()}>
+                        <div style={styles.popupHeader}>
+                            <h2 style={styles.popupTitle}>
+                                Events for {popupDate ? format(popupDate, 'MMMM do, yyyy') : ''}
+                            </h2>
+                            <button onClick={() => setIsPopupOpen(false)} style={styles.popupCloseBtn}>✕</button>
+                        </div>
+                        <div style={styles.popupList}>
+                            {popupEvents.map((ev, i) => (
+                                <div key={i} style={styles.popupEventItem}>
+                                    <div style={styles.eventDotLarge}></div>
+                                    <div>
+                                        <div style={styles.popupEventTitle}>{ev.title}</div>
+                                        <div style={styles.popupEventTime}>
+                                            {format(new Date(ev.start), 'hh:mm a')} - {format(new Date(ev.end), 'hh:mm a')}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
@@ -205,10 +252,17 @@ const CalendarLayout = () => {
 const styles: any = {
     container: {
         minHeight: '100vh',
-        backgroundColor: '#020202',
-        color: '#e0e0e0',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
         fontFamily: "'JetBrains Mono', monospace",
         display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        transition: 'background 0.3s, color 0.3s',
+    },
+    contentWrapper: {
+        display: 'flex',
+        flex: 1,
         overflow: 'hidden',
     },
     mainSection: {
@@ -216,12 +270,12 @@ const styles: any = {
         padding: '30px',
         display: 'flex',
         flexDirection: 'column',
-        borderRight: '1px solid #1a1a1a',
+        borderRight: '1px solid var(--border-color)',
     },
     sidebar: {
         width: '320px',
         padding: '30px',
-        background: '#050505',
+        background: 'var(--bg-secondary)',
         display: 'flex',
         flexDirection: 'column',
         gap: '40px',
@@ -236,13 +290,13 @@ const styles: any = {
         fontSize: '48px',
         fontWeight: '800',
         margin: 0,
-        color: '#fff',
+        color: 'var(--text-primary)',
         letterSpacing: '-2px',
         lineHeight: 1,
         textTransform: 'uppercase',
     },
     yearHighlight: {
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
     },
     subHeader: {
         color: '#2a9d8f', // A darker green/teal
@@ -258,8 +312,8 @@ const styles: any = {
     },
     navBtn: {
         background: 'transparent',
-        border: '1px solid #1a1a1a',
-        color: '#00ff88',
+        border: '1px solid var(--border-color)',
+        color: 'var(--accent-primary)',
         padding: '8px 16px',
         borderRadius: '4px',
         cursor: 'pointer',
@@ -271,9 +325,9 @@ const styles: any = {
         letterSpacing: '1px',
     },
     navBtnFilled: {
-        background: '#00ff88',
+        background: 'var(--accent-primary)',
         border: 'none',
-        color: '#000',
+        color: 'var(--text-on-accent)',
         padding: '8px 16px',
         borderRadius: '4px',
         cursor: 'pointer',
@@ -286,27 +340,27 @@ const styles: any = {
     },
     viewToggle: {
         display: 'flex',
-        background: '#0a0a0a',
+        background: 'var(--bg-secondary)',
         borderRadius: '4px',
         overflow: 'hidden',
-        border: '1px solid #1a1a1a',
+        border: '1px solid var(--border-color)',
     },
     viewOption: {
         padding: '8px 16px',
         fontSize: '11px',
-        color: '#666',
+        color: 'var(--text-secondary)',
         cursor: 'pointer',
     },
     viewOptionActive: {
         padding: '8px 16px',
         fontSize: '11px',
-        background: '#1a1a1a',
-        color: '#00ff88',
+        background: 'var(--border-color)',
+        color: 'var(--accent-primary)',
         cursor: 'pointer',
     },
     calendarWrapper: {
         flex: 1,
-        border: '1px solid #1a1a1a',
+        border: '1px solid var(--border-color)',
         borderRadius: '8px',
         overflow: 'hidden',
         display: 'flex',
@@ -315,16 +369,16 @@ const styles: any = {
     dayHeaders: {
         display: 'grid',
         gridTemplateColumns: 'repeat(7, 1fr)',
-        borderBottom: '1px solid #1a1a1a',
+        borderBottom: '1px solid var(--border-color)',
     },
     dayHeaderCell: {
         padding: '15px',
         textAlign: 'left',
         fontSize: '11px',
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         fontWeight: 'bold',
-        background: '#080808',
-        borderRight: '1px solid #1a1a1a',
+        background: 'var(--bg-tertiary)',
+        borderRight: '1px solid var(--border-color)',
     },
     grid: {
         flex: 1,
@@ -333,8 +387,8 @@ const styles: any = {
         gridAutoRows: '1fr',
     },
     dayCell: {
-        borderRight: '1px solid #1a1a1a',
-        borderBottom: '1px solid #1a1a1a',
+        borderRight: '1px solid var(--border-color)',
+        borderBottom: '1px solid var(--border-color)',
         padding: '12px',
         display: 'flex',
         flexDirection: 'column',
@@ -346,7 +400,7 @@ const styles: any = {
     dayNumber: {
         fontSize: '14px',
         fontWeight: '600',
-        color: '#888',
+        color: 'var(--text-secondary)',
     },
     eventStack: {
         display: 'flex',
@@ -355,10 +409,10 @@ const styles: any = {
     },
     eventPill: {
         background: 'rgba(0, 255, 136, 0.1)',
-        borderLeft: '2px solid #00ff88',
+        borderLeft: '2px solid var(--accent-primary)',
         padding: '4px 8px',
         fontSize: '10px',
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         borderRadius: '0 2px 2px 0',
         display: 'flex',
         alignItems: 'center',
@@ -370,15 +424,15 @@ const styles: any = {
     eventDot: {
         width: '4px',
         height: '4px',
-        background: '#00ff88',
+        background: 'var(--accent-primary)',
         borderRadius: '50%',
-        boxShadow: '0 0 5px #00ff88',
+        boxShadow: '0 0 5px var(--accent-primary)',
     },
     searchBox: {
         display: 'flex',
         alignItems: 'center',
-        background: '#0a0a0a',
-        border: '1px solid #1a1a1a',
+        background: 'var(--bg-tertiary)',
+        border: '1px solid var(--border-color)',
         borderRadius: '6px',
         padding: '10px',
         gap: '10px',
@@ -386,7 +440,7 @@ const styles: any = {
     searchInput: {
         background: 'transparent',
         border: 'none',
-        color: '#fff',
+        color: 'var(--text-primary)',
         fontSize: '13px',
         fontFamily: 'inherit',
         outline: 'none',
@@ -403,11 +457,11 @@ const styles: any = {
         alignItems: 'center',
         fontSize: '14px',
         fontWeight: 'bold',
-        color: '#fff',
+        color: 'var(--text-primary)',
     },
     miniTag: {
-        background: '#0a2a1a',
-        color: '#00ff88',
+        background: 'rgba(0, 255, 136, 0.1)',
+        color: 'var(--accent-primary)',
         fontSize: '10px',
         padding: '2px 6px',
         borderRadius: '4px',
@@ -420,7 +474,7 @@ const styles: any = {
     },
     miniDayHead: {
         fontSize: '10px',
-        color: '#666',
+        color: 'var(--text-secondary)',
         marginBottom: '4px',
     },
     miniDay: {
@@ -436,7 +490,7 @@ const styles: any = {
     },
     sectionTitle: {
         fontSize: '12px',
-        color: '#666',
+        color: 'var(--text-secondary)',
         letterSpacing: '1px',
         fontWeight: 'bold',
     },
@@ -451,23 +505,23 @@ const styles: any = {
     },
     dateMonth: {
         fontSize: '10px',
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         fontWeight: 'bold',
     },
     dateDay: {
         fontSize: '18px',
         fontWeight: '700',
-        color: '#fff',
+        color: 'var(--text-primary)',
     },
     upcomingTitle: {
         fontSize: '14px',
         fontWeight: '600',
-        color: '#fff',
+        color: 'var(--text-primary)',
         marginBottom: '4px',
     },
     upcomingTime: {
         fontSize: '11px',
-        color: '#888',
+        color: 'var(--text-secondary)',
         marginBottom: '8px',
     },
     upcomingMeta: {
@@ -477,7 +531,7 @@ const styles: any = {
     circle: {
         width: '10px',
         height: '10px',
-        background: '#444',
+        background: 'var(--border-color)',
         borderRadius: '50%',
     },
     criticalBadge: {
@@ -491,19 +545,19 @@ const styles: any = {
     },
     emptyState: {
         fontSize: '12px',
-        color: '#444',
+        color: 'var(--text-tertiary)',
         fontStyle: 'italic',
     },
     footer: {
         height: '30px',
-        borderTop: '1px solid #1a1a1a',
+        borderTop: '1px solid var(--border-color)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0 30px',
         fontSize: '10px',
-        color: '#666',
-        background: '#020202',
+        color: 'var(--text-secondary)',
+        background: 'var(--bg-primary)',
         position: 'fixed',
         bottom: 0,
         left: 0,
@@ -511,8 +565,94 @@ const styles: any = {
         zIndex: 10,
     },
     statusOk: {
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         fontWeight: 'bold',
+    },
+    moreEventsBtn: {
+        fontSize: '10px',
+        color: 'var(--text-secondary)',
+        fontWeight: 'bold',
+        padding: '2px 4px',
+        cursor: 'pointer',
+        marginTop: '2px',
+        background: 'rgba(0, 0, 0, 0.05)',
+        borderRadius: '2px',
+        textAlign: 'center',
+    },
+    popupOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 100,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    popupCard: {
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '12px',
+        padding: '24px',
+        width: '400px',
+        maxHeight: '80vh',
+        overflowY: 'auto',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+    },
+    popupHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+        borderBottom: '1px solid var(--border-color)',
+        paddingBottom: '15px',
+    },
+    popupTitle: {
+        fontSize: '18px',
+        fontWeight: 'bold',
+        color: 'var(--text-primary)',
+        margin: 0,
+    },
+    popupCloseBtn: {
+        background: 'none',
+        border: 'none',
+        color: 'var(--text-secondary)',
+        fontSize: '20px',
+        cursor: 'pointer',
+    },
+    popupList: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+    },
+    popupEventItem: {
+        background: 'var(--bg-tertiary)',
+        padding: '12px',
+        borderRadius: '8px',
+        display: 'flex',
+        gap: '12px',
+        alignItems: 'center',
+        border: '1px solid var(--border-color)',
+    },
+    eventDotLarge: {
+        width: '8px',
+        height: '8px',
+        borderRadius: '50%',
+        background: 'var(--accent-primary)',
+        boxShadow: '0 0 8px var(--accent-primary)',
+    },
+    popupEventTitle: {
+        fontSize: '14px',
+        fontWeight: 'bold',
+        color: 'var(--text-primary)',
+    },
+    popupEventTime: {
+        fontSize: '12px',
+        color: 'var(--text-secondary)',
+        marginTop: '2px',
     }
 }
 

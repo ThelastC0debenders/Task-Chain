@@ -74,18 +74,18 @@ const DocsLayout = () => {
             {/* Quill Dark Mode Overrides */}
             <style>{`
                 .ql-toolbar {
-                    background: #080808;
-                    border-color: #1a1a1a !important;
-                    color: #e0e0e0;
+                    background: var(--bg-secondary);
+                    border-color: var(--border-color) !important;
+                    color: var(--text-primary);
                     border-top-left-radius: 6px;
                     border-top-right-radius: 6px;
                 }
                 .ql-container {
-                    background: #050505;
-                    border-color: #1a1a1a !important;
+                    background: var(--bg-tertiary);
+                    border-color: var(--border-color) !important;
                     font-family: 'JetBrains Mono', 'Fira Code', monospace;
                     font-size: 14px;
-                    color: #e0e0e0;
+                    color: var(--text-primary);
                     border-bottom-left-radius: 6px;
                     border-bottom-right-radius: 6px;
                 }
@@ -93,27 +93,27 @@ const DocsLayout = () => {
                     min-height: 600px;
                 }
                 .ql-stroke {
-                    stroke: #e0e0e0 !important;
+                    stroke: var(--text-primary) !important;
                 }
                 .ql-fill {
-                    fill: #e0e0e0 !important;
+                    fill: var(--text-primary) !important;
                 }
                 .ql-picker {
-                    color: #e0e0e0 !important;
+                    color: var(--text-primary) !important;
                 }
                 .ql-picker-options {
-                    background-color: #080808 !important;
-                    border-color: #1a1a1a !important;
+                    background-color: var(--bg-secondary) !important;
+                    border-color: var(--border-color) !important;
                 }
                 .ql-picker-option {
-                    color: #e0e0e0 !important;
+                    color: var(--text-primary) !important;
                 }
             `}</style>
 
             {/* Sidebar */}
             <div style={styles.sidebar}>
                 <div style={styles.sidebarHeader}>
-                    <Shield size={16} color="#00ff88" />
+                    <Shield size={16} color="var(--accent-primary)" />
                     <span>TEAM WIKI</span>
                 </div>
                 <div style={{ padding: '0 15px 15px 15px' }}>
@@ -131,7 +131,7 @@ const DocsLayout = () => {
                                 ...(activeDoc?.id === doc.id ? styles.docItemActive : {})
                             }}
                         >
-                            <FileText size={14} color={activeDoc?.id === doc.id ? "#00ff88" : "#666"} />
+                            <FileText size={14} color={activeDoc?.id === doc.id ? "var(--accent-primary)" : "var(--text-secondary)"} />
                             <span style={styles.docTitle}>{doc.title}</span>
                         </div>
                     ))}
@@ -180,34 +180,35 @@ const styles: any = {
     container: {
         height: '100vh',
         display: 'flex',
-        backgroundColor: '#050505',
-        color: '#e0e0e0',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
         fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+        transition: "background 0.3s, color 0.3s",
     },
     sidebar: {
         width: '280px',
-        backgroundColor: '#080808',
-        borderRight: '1px solid #1a1a1a',
+        backgroundColor: 'var(--bg-secondary)',
+        borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
     },
     sidebarHeader: {
         height: '70px',
-        borderBottom: '1px solid #1a1a1a',
+        borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
         gap: '10px',
         padding: '0 20px',
         fontSize: '14px',
         fontWeight: 'bold',
-        color: '#fff',
+        color: 'var(--text-primary)',
         marginBottom: '20px',
     },
     newDocBtn: {
         width: '100%',
         backgroundColor: 'rgba(0, 255, 136, 0.1)',
-        border: '1px solid #00ff88',
-        color: '#00ff88',
+        border: '1px solid var(--accent-primary)',
+        color: 'var(--accent-primary)',
         padding: '10px',
         borderRadius: '6px',
         cursor: 'pointer',
@@ -234,14 +235,14 @@ const styles: any = {
         alignItems: 'center',
         gap: '12px',
         marginBottom: '4px',
-        color: '#888',
+        color: 'var(--text-secondary)',
         fontSize: '13px',
         transition: 'all 0.2s',
         border: '1px solid transparent',
     },
     docItemActive: {
         backgroundColor: 'rgba(0, 255, 136, 0.05)',
-        color: '#fff',
+        color: 'var(--text-primary)',
         border: '1px solid rgba(0, 255, 136, 0.1)',
     },
     docTitle: {
@@ -253,32 +254,32 @@ const styles: any = {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#050505',
+        backgroundColor: 'var(--bg-primary)',
     },
     header: {
         height: '70px',
         padding: '0 30px',
-        borderBottom: '1px solid #1a1a1a',
+        borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#080808',
+        backgroundColor: 'var(--bg-secondary)',
     },
     docMeta: {
         fontSize: '10px',
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         marginBottom: '4px',
         letterSpacing: '1px',
     },
     headerTitle: {
         fontSize: '20px',
         fontWeight: '700',
-        color: '#fff',
+        color: 'var(--text-primary)',
         lineHeight: 1,
     },
     saveBtn: {
-        backgroundColor: '#00ff88',
-        color: '#000',
+        backgroundColor: 'var(--accent-primary)',
+        color: 'var(--text-on-accent)',
         border: 'none',
         padding: '8px 20px',
         borderRadius: '4px',
@@ -305,7 +306,7 @@ const styles: any = {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#444',
+        color: 'var(--text-tertiary)',
         gap: '10px',
     },
     emptyIcon: {

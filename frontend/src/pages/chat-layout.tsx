@@ -134,7 +134,7 @@ const ChatLayout = () => {
             <div style={styles.sidebar}>
                 <div style={styles.workspaceHeader}>
                     <div style={styles.workspaceIcon}>
-                        <Cpu size={24} color="#00ff88" />
+                        <Cpu size={24} color="var(--accent-primary)" />
                     </div>
                     <div>
                         <div style={styles.workspaceName}>Taskchain Workspace</div>
@@ -178,7 +178,7 @@ const ChatLayout = () => {
                 {/* Header */}
                 <div style={styles.chatHeader}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Hash size={24} color="#00ff88" />
+                        <Hash size={24} color="var(--accent-primary)" />
                         <div>
                             <div style={styles.channelTitle}>
                                 {channels.find(c => c.id === activeChannel)?.name || "Select Channel"}
@@ -187,8 +187,8 @@ const ChatLayout = () => {
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '15px' }}>
-                        <Search size={18} color="#666" />
-                        <Bell size={18} color="#666" />
+                        <Search size={18} color="var(--text-secondary)" />
+                        <Bell size={18} color="var(--text-secondary)" />
                     </div>
                 </div>
 
@@ -228,11 +228,11 @@ const ChatLayout = () => {
                                     <div style={styles.botCard}>
                                         <div style={styles.botHeader}>
                                             <div style={styles.botLabel}>AUTOMATED</div>
-                                            <span style={{ fontSize: 10, color: '#666' }}>10:43 AM</span>
+                                            <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>10:43 AM</span>
                                         </div>
                                         <div style={{ marginBottom: 10 }}>{msg.content}</div>
                                         <div style={styles.botAction}>
-                                            <span style={{ color: '#00ff88' }}>● Passed</span>
+                                            <span style={{ color: 'var(--accent-primary)' }}>● Passed</span>
                                             <button style={styles.botBtn}>View Report</button>
                                         </div>
                                     </div>
@@ -269,12 +269,12 @@ const ChatLayout = () => {
                             style={styles.input}
                         />
                         <div style={styles.inputActions}>
-                            <Plus size={18} color="#666" style={{ cursor: 'pointer' }} />
-                            <Code size={18} color="#666" style={{ cursor: 'pointer' }} />
-                            <Smile size={18} color="#666" style={{ cursor: 'pointer' }} />
+                            <Plus size={18} color="var(--text-secondary)" style={{ cursor: 'pointer' }} />
+                            <Code size={18} color="var(--text-secondary)" style={{ cursor: 'pointer' }} />
+                            <Smile size={18} color="var(--text-secondary)" style={{ cursor: 'pointer' }} />
 
                             <button onClick={handleSend} style={styles.sendBtn}>
-                                <Send size={18} color="#000" fill="#000" />
+                                <Send size={18} color="var(--text-on-accent)" fill="var(--text-on-accent)" />
                             </button>
                         </div>
                     </div>
@@ -291,16 +291,17 @@ const styles: any = {
     container: {
         display: 'flex',
         height: '100vh',
-        backgroundColor: '#050505',
-        color: '#e0e0e0',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
         fontFamily: "'JetBrains Mono', monospace",
-        overflow: 'hidden'
+        overflow: 'hidden',
+        transition: "background 0.3s, color 0.3s",
     },
     // SIDEBAR
     sidebar: {
         width: '260px',
-        background: '#080808',
-        borderRight: '1px solid #1a1a1a',
+        background: 'var(--bg-secondary)',
+        borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
     },
@@ -309,7 +310,7 @@ const styles: any = {
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        borderBottom: '1px solid #1a1a1a'
+        borderBottom: '1px solid var(--border-color)'
     },
     workspaceIcon: {
         width: '36px',
@@ -324,17 +325,17 @@ const styles: any = {
     workspaceName: {
         fontSize: '13px',
         fontWeight: 'bold',
-        color: '#fff',
+        color: 'var(--text-primary)',
         lineHeight: '1.2'
     },
     teamName: {
         fontSize: '11px',
-        color: '#666'
+        color: 'var(--text-secondary)'
     },
     statusIndicator: {
         padding: '12px 20px',
         fontSize: '10px',
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
@@ -345,8 +346,8 @@ const styles: any = {
         width: '6px',
         height: '6px',
         borderRadius: '50%',
-        background: '#00ff88',
-        boxShadow: '0 0 8px #00ff88'
+        background: 'var(--accent-primary)',
+        boxShadow: '0 0 8px var(--accent-primary)'
     },
     channelList: {
         flex: 1,
@@ -355,7 +356,7 @@ const styles: any = {
     },
     sectionTitle: {
         fontSize: '10px',
-        color: '#444',
+        color: 'var(--text-tertiary)',
         marginBottom: '10px',
         paddingLeft: '10px',
         fontWeight: 'bold'
@@ -364,7 +365,7 @@ const styles: any = {
         padding: '8px 12px',
         borderRadius: '6px',
         cursor: 'pointer',
-        color: '#888',
+        color: 'var(--text-secondary)',
         fontSize: '13px',
         display: 'flex',
         alignItems: 'center',
@@ -375,7 +376,7 @@ const styles: any = {
     },
     channelActive: {
         background: 'rgba(0, 255, 136, 0.1)',
-        color: '#fff',
+        color: 'var(--text-primary)',
         border: '1px solid rgba(0, 255, 136, 0.1)'
     },
     activeIndicator: {
@@ -384,14 +385,14 @@ const styles: any = {
         width: '6px',
         height: '6px',
         borderRadius: '50%',
-        background: '#00ff88',
-        boxShadow: '0 0 5px #00ff88'
+        background: 'var(--accent-primary)',
+        boxShadow: '0 0 5px var(--accent-primary)'
     },
     newChannelBtn: {
         width: '100%',
-        background: '#000',
-        border: '1px dashed #333',
-        color: '#666',
+        background: 'transparent',
+        border: '1px dashed var(--border-color)',
+        color: 'var(--text-secondary)',
         padding: '10px',
         borderRadius: '6px',
         cursor: 'pointer',
@@ -408,12 +409,12 @@ const styles: any = {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        background: 'radial-gradient(circle at 50% 50%, #0a0a0a 0%, #050505 100%)',
+        background: 'var(--bg-primary)',
         position: 'relative'
     },
     chatHeader: {
         height: '70px',
-        borderBottom: '1px solid #1a1a1a',
+        borderBottom: '1px solid var(--border-color)',
         padding: '0 30px',
         display: 'flex',
         alignItems: 'center',
@@ -422,14 +423,14 @@ const styles: any = {
     channelTitle: {
         fontSize: '16px',
         fontWeight: 'bold',
-        color: '#fff',
+        color: 'var(--text-primary)',
         display: 'flex',
         alignItems: 'center',
         gap: '8px'
     },
     channelTopic: {
         fontSize: '12px',
-        color: '#666',
+        color: 'var(--text-secondary)',
         marginTop: '2px'
     },
     messagesContainer: {
@@ -447,13 +448,14 @@ const styles: any = {
         position: 'relative',
     },
     dateLabel: {
-        background: '#050505',
+        background: 'var(--bg-tertiary)',
         padding: '0 15px',
-        color: '#333',
+        color: 'var(--text-secondary)',
         fontSize: '10px',
         fontWeight: 'bold',
         letterSpacing: '1px',
-        zIndex: 1
+        zIndex: 1,
+        borderRadius: '12px',
     },
     messageRow: {
         display: 'flex',
@@ -469,14 +471,14 @@ const styles: any = {
         width: '32px',
         height: '32px',
         borderRadius: '6px',
-        background: '#1a1a1a',
+        background: 'var(--bg-tertiary)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         fontWeight: 'bold',
         fontSize: '14px',
-        border: '1px solid #333'
+        border: '1px solid var(--border-color)'
     },
     messageContent: {
         display: 'flex',
@@ -486,30 +488,23 @@ const styles: any = {
     senderName: {
         fontSize: '12px',
         fontWeight: 'bold',
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         marginBottom: '2px'
     },
     timestamp: {
         fontSize: '10px',
-        color: '#444',
+        color: 'var(--text-tertiary)',
         marginLeft: '6px',
         fontWeight: 'normal'
     },
     bubble: {
-        backgroundColor: '#1a1a1a',
-        padding: '10px 14px',
-        borderRadius: '12px 12px 12px 2px',
-        color: '#e0e0e0',
+        color: 'var(--text-primary)',
         fontSize: '14px',
         lineHeight: '1.5',
         maxWidth: 'fit-content'
     },
     myBubble: {
-        backgroundColor: 'rgba(0, 255, 136, 0.1)',
-        border: '1px solid rgba(0, 255, 136, 0.2)',
-        padding: '10px 14px',
-        borderRadius: '12px 12px 2px 12px',
-        color: '#ffffff',
+        color: 'var(--text-primary)',
         fontSize: '14px',
         lineHeight: '1.5',
         maxWidth: 'fit-content',
@@ -525,7 +520,7 @@ const styles: any = {
     systemPill: {
         background: 'rgba(0, 255, 136, 0.05)',
         border: '1px solid rgba(0, 255, 136, 0.2)',
-        color: '#00ff88',
+        color: 'var(--accent-primary)',
         padding: '6px 16px',
         borderRadius: '20px',
         fontSize: '11px',
@@ -536,8 +531,8 @@ const styles: any = {
 
     // Bot Card
     botCard: {
-        background: '#0a0a0a',
-        border: '1px solid #1a1a1a',
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--border-color)',
         borderRadius: '8px',
         padding: '15px',
         marginTop: '5px',
@@ -549,16 +544,16 @@ const styles: any = {
         marginBottom: '10px'
     },
     botLabel: {
-        background: '#00ff88',
-        color: '#000',
+        background: 'var(--accent-primary)',
+        color: 'var(--text-on-accent)',
         fontSize: '9px',
         fontWeight: 'bold',
         padding: '2px 6px',
         borderRadius: '2px'
     },
     botAction: {
-        background: '#050505',
-        border: '1px solid #1a1a1a',
+        background: 'var(--bg-tertiary)',
+        border: '1px solid var(--border-color)',
         padding: '8px 12px',
         borderRadius: '6px',
         display: 'flex',
@@ -567,9 +562,9 @@ const styles: any = {
         fontSize: '12px'
     },
     botBtn: {
-        background: 'rgba(255, 255, 255, 0.1)',
+        background: 'rgba(128, 128, 128, 0.1)',
         border: 'none',
-        color: '#fff',
+        color: 'var(--text-primary)',
         fontSize: '10px',
         padding: '4px 8px',
         borderRadius: '4px',
@@ -580,12 +575,12 @@ const styles: any = {
     // INPUT AREA
     inputArea: {
         padding: '30px',
-        borderTop: '1px solid #1a1a1a',
-        background: '#050505'
+        borderTop: '1px solid var(--border-color)',
+        background: 'var(--bg-tertiary)'
     },
     inputWrapper: {
-        background: '#080808',
-        border: '1px solid #00ff88',
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--accent-primary)',
         borderRadius: '12px',
         padding: '12px 16px',
         display: 'flex',
@@ -597,7 +592,7 @@ const styles: any = {
         flex: 1,
         background: 'transparent',
         border: 'none',
-        color: '#fff',
+        color: 'var(--text-primary)',
         fontSize: '14px',
         fontFamily: 'inherit',
         outline: 'none'
@@ -608,7 +603,7 @@ const styles: any = {
         gap: '12px'
     },
     sendBtn: {
-        background: '#00ff88',
+        background: 'var(--accent-primary)',
         border: 'none',
         borderRadius: '8px',
         width: '32px',
@@ -622,7 +617,7 @@ const styles: any = {
     inputFooter: {
         paddingTop: '8px',
         fontSize: '11px',
-        color: '#444',
+        color: 'var(--text-tertiary)',
         paddingLeft: '10px'
     }
 }

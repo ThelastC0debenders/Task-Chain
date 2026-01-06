@@ -3,10 +3,11 @@ import { socket } from "../services/socket"
 import {
     MousePointer, Pen, Eraser, StickyNote, Image as ImageIcon,
     Circle, Type, MoreVertical, ChevronLeft, ChevronRight,
-    Undo, Redo, ZoomIn, Download, Trash2, Check, Plus,
+    Undo, Redo, ZoomIn, Download, Trash2, Check, Plus, Sun, Moon,
     Sparkles, Loader
 } from "lucide-react"
 import axios from "axios"
+import { useTheme } from "../context/ThemeContext"
 
 // --- Types ---
 type Tool = 'select' | 'pen' | 'eraser' | 'shape' | 'text' | 'note' | 'image'
@@ -54,6 +55,7 @@ const throttle = (func: Function, limit: number) => {
 
 const Whiteboard = () => {
     // --- State ---
+    const { theme, toggleTheme } = useTheme()
     const [tool, setTool] = useState<Tool>('pen')
     const [brushType, setBrushType] = useState<BrushType>('pen')
     const [color, setColor] = useState("#000000")
@@ -621,6 +623,10 @@ const Whiteboard = () => {
                 </div>
 
                 <div style={styles.topRight}>
+                    <button style={styles.iconBtn} onClick={toggleTheme}>
+                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                    <div style={styles.separator} />
                     <button style={{ ...styles.iconBtn, opacity: history.length ? 1 : 0.3 }} onClick={undo} disabled={history.length === 0}><Undo size={20} /></button>
                     <button style={{ ...styles.iconBtn, opacity: future.length ? 1 : 0.3 }} onClick={redo} disabled={future.length === 0}><Redo size={20} /></button>
                     <button style={styles.iconBtn} onClick={cycleZoom}>
@@ -1025,7 +1031,7 @@ function drawShapeOnContext(ctx: CanvasRenderingContext2D, obj: BoardObject) {
 
 const styles: any = {
     topBar: {
-        height: 64, background: 'white', borderBottom: '1px solid #dadce0',
+        height: 64, background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-color)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px'
     },
     topLeft: { display: 'flex', alignItems: 'center', gap: 16 },
@@ -1034,7 +1040,7 @@ const styles: any = {
         display: 'flex', alignItems: 'center', justifyContent: 'center'
     },
     titleGroup: { display: 'flex', flexDirection: 'column' },
-    docTitle: { fontSize: 18, color: '#202124', fontWeight: 500 },
+    docTitle: { fontSize: 18, color: 'var(--text-primary)', fontWeight: 500 },
 
     topCenter: { position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
     pagination: {

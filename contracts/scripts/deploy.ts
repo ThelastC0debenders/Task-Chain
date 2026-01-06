@@ -35,7 +35,9 @@ async function main() {
   const contract = await factory.deploy();
   await contract.waitForDeployment();
 
-  console.log("taskchain deployed to:", await contract.getAddress());
+  const address = await contract.getAddress();
+  console.log("taskchain deployed to:", address);
+  fs.writeFileSync("deployed_address.txt", address);
 }
 
 main().catch((err) => {
