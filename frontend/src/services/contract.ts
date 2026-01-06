@@ -9,7 +9,8 @@ export interface OnChainTask {
   executor: string
   metadataHash: string
   category: string
-  deadline: bigint
+  completionWindow: bigint
+  submissionDeadline: bigint
   gracePeriod: bigint
   priority: number
   commitment: number
@@ -30,12 +31,12 @@ export async function getContract() {
 export async function createTaskOnChain(
   metadataHash: string,
   category: string,
-  deadline: number,
+  completionWindow: number,
   gracePeriod: number,
   priority: number
 ) {
   const contract = await getContract()
-  const tx = await contract.createTask(metadataHash, category, deadline, gracePeriod, priority)
+  const tx = await contract.createTask(metadataHash, category, completionWindow, gracePeriod, priority)
   const receipt = await tx.wait()
 
   const event = receipt.logs.find((log: any) => {
