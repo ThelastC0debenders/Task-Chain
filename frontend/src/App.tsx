@@ -13,6 +13,7 @@ import MeetingRoom from "./pages/meeting"
 import DocsLayout from "./pages/docs-layout"
 import Whiteboard from "./pages/whiteboard"
 import GraphDebugger from "./pages/graph-debugger"
+import HealthDashboard from "./pages/health-dashboard"
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/docs" element={<DocsLayout />} />
         <Route path="/whiteboard" element={<Whiteboard />} />
         <Route path="/graph-debug" element={<GraphDebugger />} />
+        <Route path="/health" element={<HealthDashboard />} />
       </Routes>
     </BrowserRouter>
   )

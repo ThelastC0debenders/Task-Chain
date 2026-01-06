@@ -19,6 +19,6 @@ app.use("/board", routes.boardRoutes)
 app.use("/calendar", routes.calendarRoutes)
 app.use("/docs", routes.docsRoutes)
 app.use("/graph", routes.graphRoutes)
-app.use("/graph", routes.graphRoutes)
+app.use("/health", routes.healthRoutes)
 
 export default app

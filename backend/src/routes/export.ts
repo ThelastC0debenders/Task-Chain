@@ -9,6 +9,7 @@ import boardRoutes from "./board"
 import calendarRoutes from "./calendar"
 import docsRoutes from "./docs"
 import graphRoutes from "./graph"
+import healthRoutes from "./health"
 
 export default {
   ipfsRoutes,
@@ -22,4 +23,5 @@ export default {
   calendarRoutes,
   docsRoutes,
   graphRoutes,
+  healthRoutes,
 }
