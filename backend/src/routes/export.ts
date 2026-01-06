@@ -8,6 +8,7 @@ import chatRoutes from "./chat"
 import boardRoutes from "./board"
 import calendarRoutes from "./calendar"
 import docsRoutes from "./docs"
+import graphRoutes from "./graph"
 
 export default {
   ipfsRoutes,
@@ -20,4 +21,5 @@ export default {
   boardRoutes,
   calendarRoutes,
   docsRoutes,
+  graphRoutes,
 }

@@ -18,5 +18,6 @@ app.use("/chat", routes.chatRoutes)
 app.use("/board", routes.boardRoutes)
 app.use("/calendar", routes.calendarRoutes)
 app.use("/docs", routes.docsRoutes)
+app.use("/graph", routes.graphRoutes)
 
 export default app
