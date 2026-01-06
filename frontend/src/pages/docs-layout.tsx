@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import ReactQuill from "react-quill"
 import "react-quill/dist/quill.snow.css"
 import * as docsService from "../services/docs"
+import { socket } from "../services/socket"
 import { FileText, Save, Plus, File, Shield } from "lucide-react"
 
 const DocsLayout = () => {
@@ -40,6 +41,31 @@ const DocsLayout = () => {
         if (activeDoc) {
             await docsService.updateDoc(activeDoc.id, content)
             alert("Saved!")
+        }
+    }
+
+    useEffect(() => {
+        if (activeDoc?.id) {
+            socket.emit("join_doc", activeDoc.id)
+            console.log("Joined doc room:", activeDoc.id)
+        }
+    }, [activeDoc?.id])
+
+    useEffect(() => {
+        socket.on("doc_updated", (data: { docId: string, content: string }) => {
+            if (activeDoc && data.docId === activeDoc.id) {
+                if (data.content !== content) {
+                    setContent(data.content)
+                }
+            }
+        })
+        return () => { socket.off("doc_updated") }
+    }, [activeDoc, content])
+
+    const handleChange = (val: string, delta: any, source: string) => {
+        setContent(val)
+        if (source === 'user' && activeDoc) {
+            socket.emit("doc_change", { docId: activeDoc.id, content: val })
         }
     }
 
@@ -131,7 +157,7 @@ const DocsLayout = () => {
                             <ReactQuill
                                 theme="snow"
                                 value={content}
-                                onChange={setContent}
+                                onChange={handleChange}
                                 style={{ height: '100%' }}
                             />
                         </div>

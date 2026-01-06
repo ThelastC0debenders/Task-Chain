@@ -43,6 +43,13 @@ const KanbanBoard = () => {
         return () => { socket.off("board_updated") }
     }, [])
 
+    useEffect(() => {
+        if (board?.id) {
+            socket.emit("join_board", board.id)
+            console.log("Joined board room:", board.id)
+        }
+    }, [board?.id])
+
     const loadBoard = async () => {
         try {
             const boards = await projectService.getBoards(teamId)

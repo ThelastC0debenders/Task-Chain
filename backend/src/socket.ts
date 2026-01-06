@@ -73,7 +73,7 @@ export const initSocket = (httpServer: HttpServer) => {
       socket.join(docId)
     })
 
-    socket.on("doc_change", (data: { docId: string, delta: any }) => {
+    socket.on("doc_change", (data: { docId: string, content: any }) => {
       socket.to(data.docId).emit("doc_updated", data)
     })
 
