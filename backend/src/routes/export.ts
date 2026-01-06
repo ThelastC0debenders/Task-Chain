@@ -11,6 +11,7 @@ import docsRoutes from "./docs"
 import graphRoutes from "./graph"
 import healthRoutes from "./health"
 import analyticsRoutes from "./analytics"
+import businessRoutes from "./business"
 
 export default {
   ipfsRoutes,
@@ -26,4 +27,5 @@ export default {
   graphRoutes,
   healthRoutes,
   analyticsRoutes,
+  businessRoutes,
 }

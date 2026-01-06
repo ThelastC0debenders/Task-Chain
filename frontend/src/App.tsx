@@ -5,6 +5,7 @@ import CreateTask from "./pages/createtask"
 import TaskView from "./pages/taskview"
 import Receipt from "./pages/receipt"
 import LeaderDashboard from "./pages/leader-dashboard"
+import LeaderReports from "./pages/leader-reports"
 import MemberDashboard from "./pages/member-dashboard"
 import UserProfile from "./pages/user-profile"
 import WorkDashboard from "./pages/work-dashboard"
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/task" element={<TaskView />} />
           <Route path="/receipt" element={<Receipt />} />
           <Route path="/leader" element={<LeaderDashboard />} />
+          <Route path="/leader/reports" element={<LeaderReports />} />
           <Route path="/dashboard" element={<MemberDashboard />} />
           <Route path="/profile/:address" element={<UserProfile />} />
           <Route path="/work" element={<WorkDashboard />} />

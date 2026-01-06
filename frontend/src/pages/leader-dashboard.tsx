@@ -25,9 +25,11 @@ import {
   Monitor,
 
   FileText,
-  Activity
+  Activity,
+  BarChart2
 } from "lucide-react"
 import Navbar from "../components/Navbar"
+import LeaderReports from "./leader-reports"
 
 const API = "/api"
 
@@ -52,7 +54,7 @@ export default function LeaderDashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [status, setStatus] = useState("")
   const [copied, setCopied] = useState(false)
-  const [activeTab, setActiveTab] = useState<"tasks" | "invite" | "apps">("tasks") // Default to tasks to match image
+  const [activeTab, setActiveTab] = useState<"tasks" | "invite" | "apps" | "reports">("tasks") // Default to tasks to match image
 
   // Task Form State
   const [taskForm, setTaskForm] = useState({
@@ -73,6 +75,8 @@ export default function LeaderDashboard() {
       fetchTasks()
     } else if (activeTab === "invite") {
       fetchMembers()
+    } else if (activeTab === "reports") {
+      // Logic for reports load if needed
     }
   }, [activeTab, teamId])
 
@@ -245,6 +249,12 @@ export default function LeaderDashboard() {
             <Users size={16} /> Team Invites
           </button>
           <button
+            onClick={() => setActiveTab("reports")}
+            style={styles.tabBtn(activeTab === "reports")}
+          >
+            <BarChart2 size={16} /> Reports & Analytics
+          </button>
+          <button
             onClick={() => setActiveTab("apps")}
             style={styles.tabBtn(activeTab === "apps")}
           >
@@ -256,10 +266,12 @@ export default function LeaderDashboard() {
         <div style={styles.sectionHeader}>
           <div style={styles.sectionTitleBorder}></div>
           <h2 style={styles.sectionTitle}>
-            {activeTab === "tasks" ? "Task Creation" : activeTab === "invite" ? "Team Invites" : "Workspace Apps"}
+            {activeTab === "tasks" ? "Task Creation" : activeTab === "invite" ? "Team Invites" : activeTab === "reports" ? "Insights & Metrics" : "Workspace Apps"}
           </h2>
           <div style={styles.protocolText}>PROTOCOL V2.1 // ACTIVE</div>
         </div>
+
+        {activeTab === "reports" && <LeaderReports teamId={teamId} />}
 
         {activeTab === "tasks" && (
           <div style={styles.contentGrid(activeTab)}>

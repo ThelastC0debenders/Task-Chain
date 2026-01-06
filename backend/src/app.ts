@@ -21,5 +21,6 @@ app.use("/docs", routes.docsRoutes)
 app.use("/graph", routes.graphRoutes)
 app.use("/health", routes.healthRoutes)
 app.use("/analytics", routes.analyticsRoutes)
+app.use("/business", routes.businessRoutes)
 
 export default app
