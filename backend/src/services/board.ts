@@ -54,7 +54,17 @@ export function getIssues(boardId: string) {
 }
 
 export function createIssue(boardId: string, columnId: string, title: string, priority: any = 'medium', description?: string, assignee?: string) {
-    if (!boards.has(boardId)) throw new Error("Board not found")
+    if (!boards.has(boardId)) {
+        // Lazy initialize if it matches our default pattern
+        if (boardId.startsWith('default-')) {
+            const teamId = boardId.replace('default-', '')
+            const newBoard = { id: boardId, teamId, name: 'Main Board', columns: defaultColumns }
+            boards.set(newBoard.id, newBoard)
+            issues.set(newBoard.id, [])
+        } else {
+            throw new Error("Board not found")
+        }
+    }
 
     const issue: Issue = {
         id: Date.now().toString(36),

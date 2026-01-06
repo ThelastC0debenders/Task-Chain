@@ -599,11 +599,11 @@ export default function MemberDashboard() {
           <div style={styles.appsGrid}>
             {[
               { title: "Team Chat", icon: <MessageCircle size={32} color="#00ff88" />, desc: "Real-time messaging channels", link: "/chat", action: null },
-              { title: "Project Board", icon: <Trello size={32} color="#00d1ff" />, desc: "Kanban task management", link: "/board", action: null },
+              { title: "Project Board", icon: <Trello size={32} color="#00d1ff" />, desc: "Kanban task management", link: `/board/default-${teamId}`, action: null },
               { title: "Calendar", icon: <Calendar size={32} color="#ff0088" />, desc: "Schedule and events", link: "/calendar", action: null },
               { title: "Video Meet", icon: <Video size={32} color="#ff9900" />, desc: "Secure video conferencing", link: null, action: handleRequestMeet },
               { title: "Team Wiki", icon: <FileText size={32} color="#aa00ff" />, desc: "Collaborative documentation", link: "/docs", action: null },
-              { title: "Jamboard", icon: <Monitor size={32} color="#ffff00" />, desc: "Visual brainstorming canvas", link: "/whiteboard", action: null },
+              { title: "Jamboard", icon: <Monitor size={32} color="#ffff00" />, desc: "Visual brainstorming canvas", link: `/whiteboard/default-${teamId}`, action: null },
             ].map((app, i) => (
               <div
                 key={i}

@@ -30,10 +30,12 @@ export default function App() {
         {/* Productivity Suite */}
         <Route path="/chat" element={<ChatLayout />} />
         <Route path="/board" element={<KanbanBoard />} />
+        <Route path="/board/:boardId" element={<KanbanBoard />} />
         <Route path="/calendar" element={<CalendarLayout />} />
         <Route path="/meet" element={<MeetingRoom />} />
         <Route path="/docs" element={<DocsLayout />} />
         <Route path="/whiteboard" element={<Whiteboard />} />
+        <Route path="/whiteboard/:wbId" element={<Whiteboard />} />
         <Route path="/graph-debug" element={<GraphDebugger />} />
       </Routes>
     </BrowserRouter>

@@ -542,11 +542,11 @@ export default function LeaderDashboard() {
           <div style={styles.appsGrid}>
             {[
               { title: "Team Chat", icon: <MessageSquare size={32} color="#00ff88" />, desc: "Real-time messaging channels", link: "/chat" },
-              { title: "Project Board", icon: <Layout size={32} color="#00d1ff" />, desc: "Kanban task management", link: "/board" },
+              { title: "Project Board", icon: <Layout size={32} color="#00d1ff" />, desc: "Kanban task management", link: `/board/default-${teamId}` },
               { title: "Calendar", icon: <Calendar size={32} color="#ff0088" />, desc: "Schedule and events", link: "/calendar" },
               { title: "Video Meet", icon: <Video size={32} color="#ff9900" />, desc: "Secure video conferencing", link: "/meet" },
               { title: "Team Wiki", icon: <FileText size={32} color="#aa00ff" />, desc: "Collaborative documentation", link: "/docs" },
-              { title: "Jamboard", icon: <Monitor size={32} color="#ffff00" />, desc: "Visual brainstorming canvas", link: "/whiteboard" },
+              { title: "Jamboard", icon: <Monitor size={32} color="#ffff00" />, desc: "Visual brainstorming canvas", link: `/whiteboard/default-${teamId}` },
             ].map((app, i) => (
               <div
                 key={i}

@@ -340,21 +340,23 @@ const Whiteboard = () => {
         if (!analysisResult || !analysisResult.data) return
 
         try {
-            const taskData = {
-                teamId: "1", // Corrected to match KanbanBoard default
-                task: {
-                    id: Date.now().toString(),
-                    columnId: "backlog", // Ensure it lands in the first column
-                    title: analysisResult.data.title || "New Task",
-                    description: analysisResult.data.description || "",
-                    priority: "medium", // Match Issue interface
-                    status: "open",
-                    createdAt: new Date().toISOString()
-                }
+            // Logic: We assume teamId = "1" and default boardId = "default-1" based on board service
+            const teamId = "1"
+            const boardId = "default-" + teamId
+
+            const issueData = {
+                boardId: boardId,
+                columnId: "backlog",
+                title: analysisResult.data.title || "New Task from Whiteboard",
+                description: analysisResult.data.description || "",
+                priority: "medium",
+                assignee: "Unassigned"
             }
 
-            await axios.post("/api/task/create", taskData)
-            alert(`Success! Task "${taskData.task.title}" created.`)
+            // Calls the Board API which now emits socket events
+            await axios.post("/api/board/issue", issueData)
+
+            alert(`Success! Task "${issueData.title}" added to Kanban Board.`)
             setShowAnalysisModal(false)
         } catch (e: any) {
             console.error("Task creation failed", e)
