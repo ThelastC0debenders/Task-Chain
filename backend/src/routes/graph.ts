@@ -1,52 +1,41 @@
-import { Router } from "express";
-import { graph } from "../services/graph/workflow";
-import { HumanMessage } from "@langchain/core/messages";
-import { analyzeWhiteboardImage } from "../services/whiteboard-analysis";
+import { Router } from "express"
+import { connectToMongo } from "../config/mongo"
 
-const router = Router();
+const router = Router()
 
-router.post("/analyze-whiteboard", async (req, res) => {
+router.get("/", async (req, res) => {
     try {
-        const { image } = req.body; // Base64 string
-        if (!image) {
-            return res.status(400).json({ error: "Image is required (base64)" });
-        }
+        const { knowledgeNodes, knowledgeEdges } = await connectToMongo()
+        const showCalendar = req.query.showCalendar === 'true'
 
-        console.log("Analyze request received, length:", image.length);
-        const result = await analyzeWhiteboardImage(image);
-        res.json(result);
-    } catch (error) {
-        console.error("Whiteboard Analysis Route Error:", error);
-        res.status(500).json({ error: "Analysis failed" });
-    }
-});
+        const nodeQuery = showCalendar ? {} : { "metadata.source": { $ne: 'calendar' } }
 
-router.post("/chat", async (req, res) => {
-    try {
-        const { message, history } = req.body;
-        // history could be passed as state messages
+        const nodes = await knowledgeNodes.find(nodeQuery).toArray()
+        // Determine edge filtering strategy:
+        // Ideally filter edges where source/target nodes are excluded.
+        // For now, fetching all edges is acceptable as React Flow handles missing nodes well,
+        // or we can just return them. Strict edge filtering would require finding all valid node IDs first.
+        const edges = await knowledgeEdges.find({}).toArray()
 
-        // For simplicity, we just take the new message and assume stateless or limited history for now
-        // In a real app, you'd load conversation history
-        const input = {
-            messages: [new HumanMessage(message)],
-            intent: req.body.intent // e.g. "search"
-        };
+        // Clean up _id for frontend
+        const safeNodes = nodes.map((n: any) => {
+            const { _id, ...rest } = n
+            return rest
+        })
 
-        const result = await graph.invoke(input);
-
-        // Extract useful output
-        // The state has "messages" (response from LLM presumably if we added a response node, 
-        // but here we only have contextExtractor etc.)
-        // We should probably return the "knowledgeNodes" or "searchResults"
+        const safeEdges = edges.map((e: any) => {
+            const { _id, ...rest } = e
+            return rest
+        })
 
         res.json({
-            graphState: result
-        });
-    } catch (error) {
-        console.error("Graph Error:", error);
-        res.status(500).json({ error: "Graph processing failed" });
+            knowledgeNodes: safeNodes,
+            knowledgeEdges: safeEdges
+        })
+    } catch (err: any) {
+        console.error(err)
+        res.status(500).json({ error: err.message })
     }
-});
+})
 
-export default router;
+export default router

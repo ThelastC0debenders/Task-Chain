@@ -1,18 +1,19 @@
 import { Server, Socket } from "socket.io"
 import { Server as HttpServer } from "http"
+import * as whiteboardService from "./services/whiteboard"
 
-export let io: Server
+let io: Server
 
-export function initSocket(httpServer: HttpServer) {
+export const initSocket = (httpServer: HttpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: "*", // Allow all for dev, restrict in prod
-      methods: ["GET", "POST"]
-    }
+      origin: "*", // Adjust for production
+      methods: ["GET", "POST"],
+    },
   })
 
   io.on("connection", (socket: Socket) => {
-    console.log("User connected:", socket.id)
+    console.log("Client connected:", socket.id)
 
     // --- Chat ---
     socket.on("join_channel", (channelId: string) => {
@@ -78,7 +79,7 @@ export function initSocket(httpServer: HttpServer) {
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id)
-       // Handle cleanup if needed
+      // Handle cleanup if needed
     })
   })
 

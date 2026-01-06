@@ -60,42 +60,101 @@ export async function contextExtractor(state: typeof ProjectState.State) {
 
     try {
         const result = await llm.invoke([new SystemMessage("You are a knowledge graph extractor."), new HumanMessage(prompt)]);
-        const text = result.content.toString();
-        console.log("DEBUG: LLM Raw Output:", text);
-
-        // Naive JSON parsing cleanup
-        const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
-        const data = JSON.parse(jsonStr);
-        console.log("DEBUG: Parsed Data:", JSON.stringify(data, null, 2));
-
-        // Save to Mongo
-        const { knowledgeNodes: nodesCol, knowledgeEdges: edgesCol } = await connectToMongo();
-
-        if (data.nodes?.length) {
-            console.log(`DEBUG: Saving ${data.nodes.length} nodes...`);
-            await Promise.all(data.nodes.map((n: any) =>
-                nodesCol.updateOne({ id: n.id }, { $set: n }, { upsert: true })
-            ));
-        } else {
-            console.log("DEBUG: No nodes to save.");
-        }
-
-        if (data.edges?.length) {
-            console.log(`DEBUG: Saving ${data.edges.length} edges...`);
-            await edgesCol.insertMany(data.edges);
-        } else {
-            console.log("DEBUG: No edges to save.");
-        }
-
-        return {
-            knowledgeNodes: data.nodes || [],
-            knowledgeEdges: data.edges || []
-        };
+        const data = parseLlmJson(result.content.toString());
+        return await saveGraphData(data);
 
     } catch (error) {
         console.error("Extraction Error:", error);
         return {};
     }
+}
+
+export async function calendarExtractor(state: typeof ProjectState.State) {
+    const messages = state.messages;
+    if (!messages.length) return {};
+    const lastMessage = messages[messages.length - 1]; // Contains formatted calendar event
+
+    const llm = getLlm();
+
+    const systemPrompt = `
+    You are a Strict Calendar Ingestion Agent.
+    Your job is to convert Google Calendar events into Knowledge Graph nodes.
+
+    RULES:
+    1. You MUST create exactly ONE 'Meeting' node for the event.
+    2. The Meeting Node ID MUST be exactly "meeting-{EVENT_ID}" matches the EVENT_ID provided in the input.
+    3. The Meeting Node Content should be the Title + Time.
+    4. You MAY create 'Person' nodes for participants.
+    5. You MAY create 'Decision' or 'Feature' nodes ONLY if the description explicitly contains "DECISION:" or "FEATURE:".
+    6. Do NOT infer assignments, deadlines, or noise from general text.
+    7. All nodes derived from this event MUST have the following metadata:
+       "metadata": {
+         "source": "calendar",
+         "eventId": "{EVENT_ID}",
+         "syncedAt": "${new Date().toISOString()}"
+       }
+
+    Input Format:
+    SOURCE: CALENDAR
+    EVENT_ID: ...
+    TITLE: ...
+    ...
+
+    Output JSON:
+    {
+      "nodes": [{ 
+        "id": "meeting-xyz", 
+        "type": "Meeting", 
+        "content": "...", 
+        "metadata": { "source": "calendar", "eventId": "...", "syncedAt": "..." } 
+      }],
+      "edges": []
+    }
+    `;
+
+    try {
+        const result = await llm.invoke([
+            new SystemMessage(systemPrompt),
+            new HumanMessage(lastMessage.content as string)
+        ]);
+        const data = parseLlmJson(result.content.toString());
+        return await saveGraphData(data);
+    } catch (error) {
+        console.error("Calendar Extraction Error:", error);
+        return {};
+    }
+}
+
+// Helper: Parse JSON from LLM output (handles markdown blocks)
+function parseLlmJson(text: string): any {
+    try {
+        const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        return JSON.parse(jsonStr);
+    } catch (e) {
+        console.error("JSON Parse Error", text);
+        return { nodes: [], edges: [] };
+    }
+}
+
+// Helper: Save nodes/edges to Mongo
+async function saveGraphData(data: any) {
+    const { knowledgeNodes: nodesCol, knowledgeEdges: edgesCol } = await connectToMongo();
+
+    if (data.nodes?.length) {
+        await Promise.all(data.nodes.map((n: any) =>
+            nodesCol.updateOne({ id: n.id }, { $set: n }, { upsert: true })
+        ));
+    }
+
+    if (data.edges?.length) {
+        // Optional: Avoid duplicate edges if needed, but insertMany is fine for now
+        await edgesCol.insertMany(data.edges);
+    }
+
+    return {
+        knowledgeNodes: data.nodes || [],
+        knowledgeEdges: data.edges || []
+    };
 }
 
 export async function jamboardTaskLinker(state: typeof ProjectState.State) {

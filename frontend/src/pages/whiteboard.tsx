@@ -136,11 +136,20 @@ const Whiteboard = () => {
         socket.emit("join_whiteboard", wbId)
         socket.on("draw_update", handleRemoteDraw)
         socket.on("object_update", handleRemoteObject)
+        socket.on("whiteboard_state", (state: { elements: DrawElement[], objects: BoardObject[] }) => {
+            console.log("Received initial state:", state)
+            if (state.objects) setObjects(state.objects)
+            if (state.elements) {
+                // Replay drawings
+                state.elements.forEach(el => drawSegment(el))
+            }
+        })
 
         return () => {
             window.removeEventListener('resize', resize)
             socket.off("draw_update", handleRemoteDraw)
             socket.off("object_update", handleRemoteObject)
+            socket.off("whiteboard_state")
         }
     }, [])
 

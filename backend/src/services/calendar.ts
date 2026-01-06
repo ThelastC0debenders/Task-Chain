@@ -65,3 +65,12 @@ export async function createEvent(evt: any): Promise<CalendarEvent> {
     participants: e.attendees?.map(a => a.email!) ?? [],
   }
 }
+
+export function formatEventAsMessage(event: CalendarEvent): string {
+  return `SOURCE: CALENDAR
+  EVENT_ID: ${event.id}
+  TITLE: "${event.title}"
+  TIME: ${event.start} - ${event.end}
+  DESCRIPTION: ${event.description || 'No description'}
+  PARTICIPANTS: ${event.participants?.join(', ') || 'None'}`
+}
