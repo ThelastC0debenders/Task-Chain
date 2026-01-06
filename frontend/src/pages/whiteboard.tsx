@@ -19,6 +19,17 @@ interface DrawElement {
     cap?: CanvasLineCap
 }
 
+interface BoardObject {
+    id: string
+    type: 'note' | 'text' | 'image'
+    x: number
+    y: number
+    content?: string
+    color?: string
+    width?: number
+    height?: number
+}
+
 const Whiteboard = () => {
     // --- State ---
     const [tool, setTool] = useState<Tool>('pen')
@@ -26,6 +37,7 @@ const Whiteboard = () => {
     const [color, setColor] = useState("#000000")
     const [isDrawing, setIsDrawing] = useState(false)
     const [strokeWidth, setStrokeWidth] = useState(2)
+    const [objects, setObjects] = useState<BoardObject[]>([]) // Object Layer State
 
     // UI State
     const [showPenMenu, setShowPenMenu] = useState(false)
@@ -70,10 +82,12 @@ const Whiteboard = () => {
         // Socket Join
         socket.emit("join_whiteboard", wbId)
         socket.on("draw_update", handleRemoteDraw)
+        socket.on("object_update", handleRemoteObject)
 
         return () => {
             window.removeEventListener('resize', resize)
             socket.off("draw_update", handleRemoteDraw)
+            socket.off("object_update", handleRemoteObject)
         }
     }, [])
 
@@ -87,6 +101,40 @@ const Whiteboard = () => {
     // --- Drawing Logic ---
     const handleRemoteDraw = (data: any) => {
         if (data.elements) drawSegment(data.elements)
+    }
+
+    const handleRemoteObject = (data: any) => {
+        if (data.type === 'add') {
+            setObjects(prev => [...prev, data.object])
+        } else if (data.type === 'update') {
+            setObjects(prev => prev.map(o => o.id === data.object.id ? data.object : o))
+        }
+    }
+
+    const addStickyNote = () => {
+        const id = Date.now().toString()
+        const newObj: BoardObject = {
+            id,
+            type: 'note',
+            x: 100,
+            y: 100,
+            content: "New Note",
+            color: '#fff740'
+        }
+        setObjects(prev => [...prev, newObj])
+        socket.emit("object_update", { wbId, type: 'add', object: newObj })
+        setTool('select')
+    }
+
+    const updateObjectPos = (id: string, x: number, y: number) => {
+        setObjects(prev => prev.map(o => {
+            if (o.id === id) {
+                const updated = { ...o, x, y }
+                socket.emit("object_update", { wbId, type: 'update', object: updated })
+                return updated
+            }
+            return o
+        }))
     }
 
     const getPos = (e: MouseEvent) => {
@@ -230,7 +278,7 @@ const Whiteboard = () => {
                     />
                     <ToolbarBtn active={tool === 'eraser'} icon={Eraser} onClick={() => setTool('eraser')} />
                     <ToolbarBtn active={tool === 'select'} icon={MousePointer} onClick={() => setTool('select')} />
-                    <ToolbarBtn active={tool === 'note'} icon={StickyNote} onClick={() => alert("Note tool coming soon!")} />
+                    <ToolbarBtn active={tool === 'note'} icon={StickyNote} onClick={addStickyNote} />
                     <ToolbarBtn active={tool === 'image'} icon={ImageIcon} onClick={() => alert("Image tool coming soon!")} />
                     <ToolbarBtn active={tool === 'shape'} icon={Square} onClick={() => setTool('shape')} hasPopup />
                     <ToolbarBtn active={tool === 'text'} icon={Type} onClick={() => setTool('text')} />
@@ -288,9 +336,16 @@ const Whiteboard = () => {
                         style={{ position: 'absolute', top: 0, left: 0, cursor: tool === 'select' ? 'default' : 'crosshair' }}
                     />
 
-                    {/* Object Layer (Future) */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: tool === 'select' ? 'auto' : 'none' }}>
-                        {/* Objects will go here */}
+                    {/* Object Layer */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: tool === 'select' ? 'auto' : 'none', overflow: 'hidden' }}>
+                        {objects.map(obj => (
+                            <DraggableObject
+                                key={obj.id}
+                                obj={obj}
+                                isSelected={tool === 'select'}
+                                onDrag={(x, y) => updateObjectPos(obj.id, x, y)}
+                            />
+                        ))}
                     </div>
                 </div>
 
@@ -298,6 +353,53 @@ const Whiteboard = () => {
         </div>
     )
 }
+
+// Simple Draggable Component
+const DraggableObject = ({ obj, isSelected, onDrag }: { obj: BoardObject, isSelected: boolean, onDrag: (x: number, y: number) => void }) => {
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!isSelected) return
+        e.stopPropagation() // Prevent drawing
+        const startX = e.clientX
+        const startY = e.clientY
+        const initialX = obj.x
+        const initialY = obj.y
+
+        const handleMouseMove = (me: MouseEvent) => {
+            const dx = me.clientX - startX
+            const dy = me.clientY - startY
+            onDrag(initialX + dx, initialY + dy)
+        }
+
+        const handleMouseUp = () => {
+            window.removeEventListener('mousemove', handleMouseMove as any)
+            window.removeEventListener('mouseup', handleMouseUp)
+        }
+
+        window.addEventListener('mousemove', handleMouseMove as any)
+        window.addEventListener('mouseup', handleMouseUp)
+    }
+
+    if (obj.type === 'note') {
+        return (
+            <div
+                onMouseDown={handleMouseDown}
+                style={{
+                    position: 'absolute', left: obj.x, top: obj.y,
+                    width: 200, height: 200, background: obj.color,
+                    padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    cursor: isSelected ? 'grab' : 'default',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'cursive', fontSize: 20, textAlign: 'center',
+                    userSelect: 'none'
+                }}
+            >
+                {obj.content}
+            </div>
+        )
+    }
+    return null
+}
+
 
 const styles = {
     textBtn: {
