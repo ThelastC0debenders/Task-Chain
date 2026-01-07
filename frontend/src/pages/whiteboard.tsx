@@ -651,11 +651,6 @@ const Whiteboard = () => {
                         {isAnalyzing ? <Loader size={16} style={{ marginRight: 8, animation: 'spin 1s linear infinite' }} /> : <Sparkles size={16} style={{ marginRight: 8 }} />}
                         {isAnalyzing ? "Analyzing..." : "AI Analyze"}
                     </button>
-                    {/* AI Analyze Button */}
-                    <button style={{ ...styles.shareBtn, marginLeft: 12, background: 'linear-gradient(135deg, #8e24aa, #ba68c8)' }} onClick={handleAnalyze} disabled={isAnalyzing}>
-                        {isAnalyzing ? <Loader size={16} style={{ marginRight: 8, animation: 'spin 1s linear infinite' }} /> : <Sparkles size={16} style={{ marginRight: 8 }} />}
-                        {isAnalyzing ? "Analyzing..." : "AI Analyze"}
-                    </button>
                 </div>
             </div>
 
@@ -822,7 +817,7 @@ const Whiteboard = () => {
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                            <button onClick={() => setShowAnalysisModal(false)} style={{ ...styles.textBtn, border: 'none', background: 'transparent' }}>Dismiss</button>
+                            <button onClick={() => setShowAnalysisModal(false)} style={{ ...styles.textBtn, border: 'none', background: 'transparent', cursor: 'pointer' }}>Dismiss</button>
                             <button
                                 onClick={handleCreateTask}
                                 style={{ ...styles.shareBtn, background: '#1e8e3e' }}
