@@ -1,4 +1,4 @@
-# 🔗 Taskchain-CIT
+# 🔗 Task-Chain
 
 > A decentralized, on-chain task management platform with integrated live workspace, AI-powered development assistance, and blockchain verification.
 
