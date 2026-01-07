@@ -40,7 +40,7 @@ export default function MemberDashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [claimedTasks, setClaimedTasks] = useState<string[]>([])
   const [callState, setCallState] = useState<any>(null)
-  const [dismissedCallId, setDismissedCallId] = useState<string | null>(null)
+  const [dismissedCallId, setDismissedCallId] = useState<string | null>(() => localStorage.getItem("taskchain_dismissedCallId"))
   const [receipt, setReceipt] = useState<ContributionReceipt | null>(null)
   const [activeTaskForProof, setActiveTaskForProof] = useState<Task | null>(null)
 
@@ -138,6 +138,7 @@ export default function MemberDashboard() {
   }
 
   async function fetchTasks() {
+    if (!teamId) return
     try {
       const res = await axios.get(`${API}/task/${teamId}`)
       setTasks(res.data.tasks || [])
@@ -292,7 +293,10 @@ export default function MemberDashboard() {
     return "Normal"
   }
 
-
+  const handleDismissCall = (callId: string) => {
+    setDismissedCallId(callId)
+    localStorage.setItem("taskchain_dismissedCallId", callId)
+  }
 
   return (
     <div style={styles.container}>
@@ -305,23 +309,22 @@ export default function MemberDashboard() {
           <div
             style={{
               position: "fixed",
-              bottom: 20,
-              right: 20,
+              bottom: 40, // Raised from 20 to avoid overlap
+              right: 40, // Raised from 20
               background: "#0a0a0a",
               border: "1px solid #00ff88",
               color: "#00ff88",
               padding: "16px 18px",
               borderRadius: "10px",
-              zIndex: 9999,
+              zIndex: 10000, // Increased z-index
               width: "320px",
               boxShadow: "0 0 20px rgba(0,255,136,0.25)",
             }}
           >
-            {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <strong>📞 Team Meet Requested</strong>
               <button
-                onClick={() => setDismissedCallId(callState.createdAt)}
+                onClick={() => handleDismissCall(callState.createdAt)}
                 style={{
                   background: "transparent",
                   border: "none",
